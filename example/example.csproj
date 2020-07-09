@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <RootNamespace>Volk.Example</RootNamespace>
+        
+        <WarningsAsErrors>CS8600;CS8601;CS8602;CS8603</WarningsAsErrors>
+
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\volk\volk.csproj" />
+    </ItemGroup>
+
+    <ItemGroup>
+      <PackageReference Include="glfw-net" Version="3.3.1" />
+    </ItemGroup>
+
+</Project>

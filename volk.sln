@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "volk", "volk\volk.csproj", "{A81F8716-0525-4A68-9222-E6E956AE5794}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "generator", "generator\generator.csproj", "{47A38BCC-CC83-4AEE-8A40-64EAB99AA7C1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "example", "example\example.csproj", "{C932E020-596D-4D42-A336-73731209791A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A81F8716-0525-4A68-9222-E6E956AE5794}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A81F8716-0525-4A68-9222-E6E956AE5794}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A81F8716-0525-4A68-9222-E6E956AE5794}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A81F8716-0525-4A68-9222-E6E956AE5794}.Release|Any CPU.Build.0 = Release|Any CPU
+		{47A38BCC-CC83-4AEE-8A40-64EAB99AA7C1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{47A38BCC-CC83-4AEE-8A40-64EAB99AA7C1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{47A38BCC-CC83-4AEE-8A40-64EAB99AA7C1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{47A38BCC-CC83-4AEE-8A40-64EAB99AA7C1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C932E020-596D-4D42-A336-73731209791A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C932E020-596D-4D42-A336-73731209791A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C932E020-596D-4D42-A336-73731209791A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C932E020-596D-4D42-A336-73731209791A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
