@@ -13,6 +13,7 @@ using System.Xml.Linq;
 
 namespace Volk.Generator {
     // TODO: Fix AccelerationStructureInstanceKHR
+    // TODO: Replace KeyValuePair by tuple
 
     static class Program {
         private const string VulkanSpecUrl = "https://raw.githubusercontent.com/KhronosGroup/Vulkan-Docs/master/xml/vk.xml";
@@ -332,26 +333,49 @@ namespace Volk.Vulkan {{
             return value.Contains("U") ? "ushort" : "int";
         }
 
+        /// <summary>
+        /// Write Unions file
+        /// </summary>
+        /// <param name="unions">Vulkan unions</param>
+        /// <param name="baseTypes">Base types</param>
         private static void WriteUnions(Dictionary<string, XElement> unions, LinkedList<string> baseTypes) {
-            var unionArray = new string[unions.Count];
+            string DeclareUnionMember(string type, string name) {
+                bool @fixed = Regex.IsMatch(name, @"\[.*\]$");
 
-            int index = 0;
-            foreach (var union in unions) {
-                unionArray[index++] = "\t[StructLayout(LayoutKind.Explicit)]\n" +
-                                      $"\tpublic struct {TrimVKPrefix(union.Key)} {{\n" +
-                                      $"{string.Join("\n", union.Value.Elements("member").Select(member => Declaration(member.Nodes())).Select(member => $"\t\t[FieldOffset(0)] public unsafe {(Regex.IsMatch(member.Value, @"\[.*\]$") ? "fixed " : "")}{member.Key} {member.Value};"))}\n" +
-                                      "\t}";
+                return $@"        [FieldOffset(0)] public {(IsUnsafe(type, @fixed) ? "unsafe " : "")}{(@fixed ? "fixed " : "")}{type} {name};";
+            }
+
+            string DeclareUnion(string name, XElement content) {
+                return $@"
+    [StructLayout(LayoutKind.Explicit)]
+    public struct {TrimVKPrefix(name)} {{
+{string.Join("\n", content.Elements("member").Select(member => Declaration(member.Nodes())).Select(proto => DeclareUnionMember(proto.Key, proto.Value)))}
+    }}";
             }
 
             using var unionFile = new StreamWriter("Unions.cs", false);
-            unionFile.WriteLine(Copyright());
-            unionFile.WriteLine("using System.Runtime.InteropServices;\n" +
-                                $"{string.Join("\n", baseTypes)}\n\n" +
-                                "namespace Volk.Vulkan.Types {\n" +
-                                string.Join("\n\n", unionArray) +
-                                "\n}");
+            unionFile.WriteLine(
+                $@"{Copyright()}
+using System.Runtime.InteropServices;
+
+{string.Join("\n", baseTypes)}
+
+namespace Volk.Vulkan.Types {{
+{string.Join("\n", unions.Select(union => DeclareUnion(union.Key, union.Value)))}
+}}"
+            );
 
             Console.WriteLine("All unions were generated");
+        }
+
+        /// <summary>
+        /// Check if a given type is unsafe
+        /// </summary>
+        /// <param name="type">Type</param>
+        /// <param name="fixed">Type is fixed</param>
+        /// <returns>true if type is unsafe, false otherwise</returns>
+        private static bool IsUnsafe(string type, bool @fixed) {
+            return @fixed || type.Contains('*');
         }
 
         private static void WriteStructures(Dictionary<string, XElement> structures, Dictionary<string, XElement> types, LinkedList<string> baseTypes,
@@ -746,7 +770,7 @@ namespace Volk.Vulkan {{
         }
 
         // TODO: Doc
-        public static string ToTitleCase(string str) {
+        public static string ToTitleCase(string str) { // TODO: Skip KHR and other acronyms
             var builder = new StringBuilder();
 
             for (int i = 0; i < str.Length; i++) {
