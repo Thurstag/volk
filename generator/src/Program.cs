@@ -231,7 +231,13 @@ namespace Volk.Vulkan {{
             Console.WriteLine("Instance/Device commands loader was generated");
         }
 
-        // TODO: Doc
+        /// <summary>
+        /// Check if a given type is a descendant of another type
+        /// </summary>
+        /// <param name="types">Vulkan types</param>
+        /// <param name="baseType">Base type</param>
+        /// <param name="type">type</param>
+        /// <returns>true if <paramref name="type"/> is a descendant of <paramref name="baseType"/>, false otherwise</returns>
         private static bool IsDescendantType(Dictionary<string, XElement> types, string baseType, string type) {
             if (baseType == type) {
                 return true;
@@ -242,29 +248,31 @@ namespace Volk.Vulkan {{
             }
 
             var parents = types[type].Attribute("parent");
-            if (parents == null) {
-                return false;
-            }
-
-            return parents.Value.Split(',').Any(parent => IsDescendantType(types, baseType, parent));
+            return parents != null && parents.Value.Split(',').Any(parent => IsDescendantType(types, baseType, parent));
         }
 
-        // TODO: Doc
+        /// <summary>
+        /// Write CommandTable file
+        /// </summary>
+        /// <param name="commands">Vulkan commands</param>
         private static void WriteCommandTable(Dictionary<string, XElement> commands) {
-            var commandsArray = new string[commands.Count];
-
-            int index = 0;
-            foreach (var cmd in commands) {
-                commandsArray[index++] = $"\t\tpublic static Commands.{TrimVKPrefix(cmd.Key)}? {TrimVKPrefix(cmd.Key)};";
-            }
+            string DeclareMember(string command) => $@"
+        public static Commands.{command}? {command};";
 
             using var commandsFile = new StreamWriter("CommandTable.cs", false);
-            commandsFile.WriteLine(Copyright());
-            commandsFile.WriteLine("namespace Volk.Vulkan {\n" +
-                                   "\tpublic static class CommandTable {\n" +
-                                   string.Join("\n", commandsArray) +
-                                   "\n\t}\n" +
-                                   "}");
+            commandsFile.WriteLine(
+                $@"{Copyright()}
+namespace Volk.Vulkan {{
+
+	/// <summary>
+	/// Global table of commands
+	/// </summary>
+    public static class CommandTable {{
+        {string.Join("\n", commands.Keys.Select(TrimVKPrefix).Select(DeclareMember))}
+    }}
+}}"
+            );
+
             Console.WriteLine("Command table was written");
         }
 
