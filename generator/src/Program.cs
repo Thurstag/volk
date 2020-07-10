@@ -107,7 +107,11 @@ namespace Volk.Generator {
             WriteInstanceAndDevicesFunctionsLoader(commands, types);
         }
 
-        // TODO: Doc
+        /// <summary>
+        /// Write InstanceFunctions, DeviceFunctions, DeviceCommandTable files
+        /// </summary>
+        /// <param name="commands">Vulkan commands</param>
+        /// <param name="types">Vulkan types</param>
         private static void WriteInstanceAndDevicesFunctionsLoader(Dictionary<string, XElement> commands, Dictionary<string, XElement> types) {
             LinkedList<string> instanceCommands = new LinkedList<string>(), deviceCommands = new LinkedList<string>();
 
@@ -121,72 +125,108 @@ namespace Volk.Generator {
                 }
             }
 
-            using var instanceFile = new StreamWriter("InstanceFunctions.cs", false); // TODO: Doc
-            instanceFile.WriteLine(Copyright());
-            instanceFile.WriteLine("using System;\n" +
-                                   "using System.Text;\n" +
-                                   "using Volk.Vulkan;\n\n" +
-                                   "namespace Volk {\n" +
-                                   "\tpublic static partial class Functions {\n" +
-                                   "\t\tpublic static void LoadInstance(IntPtr instance) {\n" +
-                                   "\t\t\tif (CommandTable.GetInstanceProcAddr == null) {\n" +
-                                   "\t\t\t\tthrow new Exception(\"GetInstanceProcAddr isn't loaded\");\n" +
-                                   "\t\t\t}\n\n" +
-                                   "\t\t\tunsafe {\n" +
-                                   string.Join("\n",
-                                       instanceCommands.Select(cmd =>
-                                           $"\t\t\t\tfixed (byte* funcName = &Encoding.UTF8.GetBytes(\"{cmd}\")[0]) {{\n" +
-                                           $"\t\t\t\t\tCommandTable.{TrimVKPrefix(cmd)} = FunctionPtrToDelegate<Commands.{TrimVKPrefix(cmd)}>(CommandTable.GetInstanceProcAddr(instance, funcName));" +
-                                           "\n\t\t\t\t}")) +
-                                   "\n\t\t\t}\n" +
-                                   "\t\t}\n" +
-                                   "\t}\n" +
-                                   "}");
+            string CommandLoader(string command, string loader, string param) =>
+                $@"
+                fixed (byte* funcName = &Encoding.UTF8.GetBytes(""{command}"")[0]) {{
+                    CommandTable.{TrimVKPrefix(command)} = FunctionPtrToDelegate<Commands.{TrimVKPrefix(command)}>(CommandTable.{loader}({param}, funcName));
+                }}";
 
-            using var deviceFile = new StreamWriter("DeviceFunctions.cs", false); // TODO: Doc
-            deviceFile.WriteLine(Copyright());
-            deviceFile.WriteLine("using System;\n" +
-                                 "using System.Text;\n" +
-                                 "using Volk.Vulkan;\n\n" +
-                                 "namespace Volk {\n" +
-                                 "\tpublic static partial class Functions {\n" +
-                                 "\t\tpublic static void LoadDevice(IntPtr device) {\n" +
-                                 "\t\t\tif (CommandTable.GetDeviceProcAddr == null) {\n" +
-                                 "\t\t\t\tthrow new Exception(\"GetDeviceProcAddr isn't loaded\");\n" +
-                                 "\t\t\t}\n\n" +
-                                 "\t\t\tunsafe {\n" +
-                                 string.Join("\n",
-                                     deviceCommands.Select(cmd =>
-                                         $"\t\t\t\tfixed (byte* funcName = &Encoding.UTF8.GetBytes(\"{cmd}\")[0]) {{\n" +
-                                         $"\t\t\t\t\tCommandTable.{TrimVKPrefix(cmd)} = FunctionPtrToDelegate<Commands.{TrimVKPrefix(cmd)}>(CommandTable.GetDeviceProcAddr(device, funcName));" +
-                                         "\n\t\t\t\t}")) +
-                                 "\n\t\t\t}\n" +
-                                 "\t\t}\n\n" +
-                                 "\t\tpublic static DeviceCommandTable LoadDeviceTable(IntPtr device) {\n" +
-                                 "\t\t\tif (CommandTable.GetDeviceProcAddr == null) {\n" +
-                                 "\t\t\t\tthrow new Exception(\"GetDeviceProcAddr isn't loaded\");\n" +
-                                 "\t\t\t}\n\n" +
-                                 "\t\t\tvar deviceTable = new DeviceCommandTable();\n" +
-                                 "\t\t\tunsafe {\n" +
-                                 string.Join("\n",
-                                     deviceCommands.Select(cmd =>
-                                         $"\t\t\t\tfixed (byte* funcName = &Encoding.UTF8.GetBytes(\"{cmd}\")[0]) {{\n" +
-                                         $"\t\t\t\t\tdeviceTable.{TrimVKPrefix(cmd)} = FunctionPtrToDelegate<Commands.{TrimVKPrefix(cmd)}>(CommandTable.GetDeviceProcAddr(device, funcName));" +
-                                         "\n\t\t\t\t}")) +
-                                 "\n\t\t\t}\n" +
-                                 "\t\t\treturn deviceTable;\n" +
-                                 "\t\t}\n" +
-                                 "\t}\n" +
-                                 "}");
+            using var instanceFile = new StreamWriter("InstanceFunctions.cs", false);
+            instanceFile.WriteLine(
+                $@"{Copyright()}
+using System;
+using System.Text;
+using Volk.Vulkan;
 
-            using var deviceTableFile = new StreamWriter("DeviceCommandTable.cs", false); // TODO: Doc
-            deviceTableFile.WriteLine(Copyright());
-            deviceTableFile.WriteLine("namespace Volk.Vulkan {\n" +
-                                      "\tpublic class DeviceCommandTable {\n" +
-                                      string.Join("\n",
-                                          deviceCommands.Select(cmd => $"\t\tpublic Commands.{TrimVKPrefix(cmd)}? {TrimVKPrefix(cmd)};")) +
-                                      "\n\t}\n" +
-                                      "}");
+namespace Volk {{
+    public static partial class Functions {{
+
+        /// <summary>
+        /// Load instance commands into <see cref=""CommandTable""/>
+        /// </summary>
+        /// <param name=""instance"">Vulkan instance</param>
+        /// <exception cref=""Exception"">GetInstanceProcAddr isn't loaded</exception>
+        public static void LoadInstance(IntPtr instance) {{
+            if (CommandTable.GetInstanceProcAddr == null) {{
+                throw new Exception(""GetInstanceProcAddr isn't loaded"");
+            }}
+
+            unsafe {{
+                {string.Join("\n", instanceCommands.Select(cmd => CommandLoader(cmd, "GetInstanceProcAddr", "instance")))}
+            }}
+        }}
+    }}
+}}"
+            );
+
+            string DeviceCommandLoader(string command) => $@"
+                fixed (byte* funcName = &Encoding.UTF8.GetBytes(""{command}"")[0]) {{
+                    deviceTable.{TrimVKPrefix(command)} = FunctionPtrToDelegate<Commands.{TrimVKPrefix(command)}>(CommandTable.GetDeviceProcAddr(device, funcName));
+                }}";
+
+            using var deviceFile = new StreamWriter("DeviceFunctions.cs", false);
+            deviceFile.WriteLine(
+                $@"{Copyright()}
+using System;
+using System.Text;
+using Volk.Vulkan;
+
+namespace Volk {{
+    public static partial class Functions {{
+
+        /// <summary>
+        /// Load device commands into <see cref=""CommandTable""/>
+        /// </summary>
+        /// <param name=""device"">Vulkan logical device</param>
+        /// <exception cref=""Exception"">GetDeviceProcAddr isn't loaded</exception>
+        public static void LoadDevice(IntPtr device) {{
+            if (CommandTable.GetDeviceProcAddr == null) {{
+                throw new Exception(""GetDeviceProcAddr isn't loaded"");
+            }}
+
+            unsafe {{
+                {string.Join("\n", deviceCommands.Select(cmd => CommandLoader(cmd, "GetDeviceProcAddr", "device")))}
+            }}
+        }}
+
+        /// <summary>
+        /// Load device commands into a local table
+        /// </summary>
+        /// <param name=""device"">Vulkan logical device</param>
+        /// <returns>Device commands table</returns>
+        /// <exception cref=""Exception"">GetDeviceProcAddr isn't loaded</exception>
+        public static DeviceCommandTable LoadDeviceTable(IntPtr device) {{
+            if (CommandTable.GetDeviceProcAddr == null) {{
+                throw new Exception(""GetDeviceProcAddr isn't loaded"");
+            }}
+
+            var deviceTable = new DeviceCommandTable();
+
+            unsafe {{
+                {string.Join("\n", deviceCommands.Select(DeviceCommandLoader))}
+            }}
+
+            return deviceTable;
+        }}
+    }}
+}}"
+            );
+
+            string DeclareCommandTableMember(string command) => $@"
+        public Commands.{command}? {command};";
+
+            using var deviceTableFile = new StreamWriter("DeviceCommandTable.cs", false);
+            deviceTableFile.WriteLine(
+                $@"{Copyright()}
+namespace Volk.Vulkan {{
+    /// <summary>
+	/// Table of device commands
+	/// </summary>
+    public class DeviceCommandTable {{
+        {string.Join("\n", deviceCommands.Select(TrimVKPrefix).Select(DeclareCommandTableMember))}
+    }}
+}}"
+            );
 
             Console.WriteLine("Instance/Device commands loader was generated");
         }
