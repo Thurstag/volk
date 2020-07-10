@@ -7,7 +7,6 @@ namespace Volk.Vulkan {
 	/// Table of device commands
 	/// </summary>
     public class DeviceCommandTable {
-        
         public Commands.DestroyDevice? DestroyDevice;
 
         public Commands.GetDeviceQueue? GetDeviceQueue;

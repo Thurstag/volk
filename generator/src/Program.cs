@@ -125,8 +125,7 @@ namespace Volk.Generator {
                 }
             }
 
-            string CommandLoader(string command, string loader, string param) =>
-                $@"
+            string CommandLoader(string command, string loader, string param) => $@"
                 fixed (byte* funcName = &Encoding.UTF8.GetBytes(""{command}"")[0]) {{
                     CommandTable.{TrimVKPrefix(command)} = FunctionPtrToDelegate<Commands.{TrimVKPrefix(command)}>(CommandTable.{loader}({param}, funcName));
                 }}";
@@ -212,8 +211,7 @@ namespace Volk {{
 }}"
             );
 
-            string DeclareCommandTableMember(string command) => $@"
-        public Commands.{command}? {command};";
+            string DeclareCommandTableMember(string command) => $@"        public Commands.{command}? {command};";
 
             using var deviceTableFile = new StreamWriter("DeviceCommandTable.cs", false);
             deviceTableFile.WriteLine(
@@ -223,7 +221,7 @@ namespace Volk.Vulkan {{
 	/// Table of device commands
 	/// </summary>
     public class DeviceCommandTable {{
-        {string.Join("\n", deviceCommands.Select(TrimVKPrefix).Select(DeclareCommandTableMember))}
+{string.Join("\n\n", deviceCommands.Select(TrimVKPrefix).Select(DeclareCommandTableMember))}
     }}
 }}"
             );
@@ -256,8 +254,7 @@ namespace Volk.Vulkan {{
         /// </summary>
         /// <param name="commands">Vulkan commands</param>
         private static void WriteCommandTable(Dictionary<string, XElement> commands) {
-            string DeclareMember(string command) => $@"
-        public static Commands.{command}? {command};";
+            string DeclareMember(string command) => $@"        public static Commands.{command}? {command};";
 
             using var commandsFile = new StreamWriter("CommandTable.cs", false);
             commandsFile.WriteLine(
@@ -268,7 +265,7 @@ namespace Volk.Vulkan {{
 	/// Global table of commands
 	/// </summary>
     public static class CommandTable {{
-        {string.Join("\n", commands.Keys.Select(TrimVKPrefix).Select(DeclareMember))}
+{string.Join("\n\n", commands.Keys.Select(TrimVKPrefix).Select(DeclareMember))}
     }}
 }}"
             );
@@ -276,13 +273,14 @@ namespace Volk.Vulkan {{
             Console.WriteLine("Command table was written");
         }
 
-        // TODO: Doc
+        /// <summary>
+        /// Write Constants file
+        /// </summary>
+        /// <param name="constants">Vulkan constants</param>
         private static void WriteConstants(LinkedList<XElement> constants) {
-            var constantArray = new string[constants.Count];
             var types = new Dictionary<string, string>();
 
-            int index = 0;
-            foreach (var constant in constants) {
+            string DeclareConstant(XElement constant) {
                 string type, value;
 
                 if (constant.Attribute("alias") != null) {
@@ -301,32 +299,37 @@ namespace Volk.Vulkan {{
                     types.Add(constant.Attribute("name").Value, type);
                 }
 
-                constantArray[index++] =
-                    $"\t\tpublic const {type} {TrimVKPrefix(ToTitleCase(constant.Attribute("name").Value))} = {value};";
+                return $"        public const {type} {TrimVKPrefix(ToTitleCase(constant.Attribute("name").Value))} = {value};";
             }
 
             using var constantFile = new StreamWriter("Constants.cs", false);
-            constantFile.WriteLine(Copyright());
-            constantFile.WriteLine("namespace Volk.Vulkan {\n" +
-                                   "\tpublic class Constants {\n" +
-                                   $"{string.Join("\n", constantArray)}\n" +
-                                   "\t}\n" +
-                                   "\n}");
+            constantFile.WriteLine(
+                $@"{Copyright()}
+namespace Volk.Vulkan {{
+    public class Constants {{
+{string.Join("\n", constants.Select(DeclareConstant))}
+    }}
+}}"
+            );
 
             Console.WriteLine("All constants were generated");
         }
 
-        // TODO: Doc
+        /// <summary>
+        /// Deduce type of a number
+        /// </summary>
+        /// <param name="value">Number</param>
+        /// <returns>Type</returns>
         private static string DeclType(string value) {
             if (value.Last() == 'f') {
                 return "float";
-            } else if (value.Contains("ULL")) {
-                return "ulong";
-            } else if (value.Contains("U")) {
-                return "ushort";
             }
 
-            return "int";
+            if (value.Contains("ULL")) {
+                return "ulong";
+            }
+
+            return value.Contains("U") ? "ushort" : "int";
         }
 
         private static void WriteUnions(Dictionary<string, XElement> unions, LinkedList<string> baseTypes) {

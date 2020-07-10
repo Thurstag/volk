@@ -8,7 +8,6 @@ namespace Volk.Vulkan {
 	/// Global table of commands
 	/// </summary>
     public static class CommandTable {
-        
         public static Commands.CreateInstance? CreateInstance;
 
         public static Commands.DestroyInstance? DestroyInstance;
