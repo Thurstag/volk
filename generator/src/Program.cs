@@ -349,7 +349,7 @@ namespace Volk.Vulkan {{
                 return $@"
     [StructLayout(LayoutKind.Explicit)]
     public struct {TrimVKPrefix(name)} {{
-{string.Join("\n", content.Elements("member").Select(member => Declaration(member.Nodes())).Select(proto => DeclareUnionMember(proto.Key, proto.Value)))}
+{string.Join("\n", content.Elements("member").Select(member => DeducePrototype(member.Nodes())).Select(proto => DeclareUnionMember(proto.Item1, proto.Item2)))}
     }}";
             }
 
@@ -388,45 +388,47 @@ namespace Volk.Vulkan.Types {{
                 var members = new LinkedList<string>();
 
                 foreach (var member in structure.Value.Elements("member")) {
-                    var proto = Declaration(member.Nodes());
+                    var (type, name) = DeducePrototype(member.Nodes());
 
-                    var arrayMatcher = Regex.Match(proto.Value, @"\[.*\]$");
+                    var arrayMatcher = Regex.Match(name, @"\[.*\]$");
                     if (arrayMatcher.Success) {
-                        if (proto.Value.EndsWith("[]")) {
-                            proto = new KeyValuePair<string, string>($"{proto.Key}[]", proto.Value.Substring(0, proto.Value.Length - 2));
-                        } else if (Regex.IsMatch(proto.Value, @"\[.*\]\[.*\]$")) {
-                            proto = new KeyValuePair<string, string>($"{proto.Key}[][]", proto.Value.Substring(0, arrayMatcher.Index));
+                        if (name.EndsWith("[]")) {
+                            type = $"{type}[]";
+                            name = name.Substring(0, name.Length - 2);
+                        } else if (Regex.IsMatch(name, @"\[.*\]\[.*\]$")) {
+                            type = $"{type}[][]";
+                            name = name.Substring(0, arrayMatcher.Index);
                         } else {
-                            var sizeStr = proto.Value.Substring(arrayMatcher.Index + 1, proto.Value.Length - 2 - arrayMatcher.Index);
+                            var sizeStr = name.Substring(arrayMatcher.Index + 1, name.Length - 2 - arrayMatcher.Index);
                             int size;
                             if (int.TryParse(sizeStr, out size)) {
-                                if (types.ContainsKey($"Vk{proto.Key}")) {
+                                if (types.ContainsKey($"Vk{type}")) {
                                     for (int i = 0; i < size; i++) {
-                                        members.AddLast($"\t\tpublic {proto.Key} {proto.Value.Substring(0, arrayMatcher.Index)}_{i};");
+                                        members.AddLast($"\t\tpublic {type} {name.Substring(0, arrayMatcher.Index)}_{i};");
                                     }
 
                                     continue;
                                 } else {
-                                    proto = new KeyValuePair<string, string>($"fixed {proto.Key}", proto.Value);
+                                    type = $"fixed {type}";
                                 }
                             } else {
-                                if (types.ContainsKey($"Vk{proto.Key}")) {
+                                if (types.ContainsKey($"Vk{type}")) {
                                     var realSize = int.Parse(constants.First(constant => constant.Attribute("name").Value == sizeStr)
                                         .Attribute("value").Value);
                                     for (int i = 0; i < realSize; i++) {
-                                        members.AddLast($"\t\tpublic {proto.Key} {proto.Value.Substring(0, arrayMatcher.Index)}_{i};");
+                                        members.AddLast($"\t\tpublic {type} {name.Substring(0, arrayMatcher.Index)}_{i};");
                                     }
 
                                     continue;
                                 } else {
-                                    proto = new KeyValuePair<string, string>($"fixed {proto.Key}",
-                                        $"{proto.Value.Substring(0, arrayMatcher.Index)}[Constants.{TrimVKPrefix(ToTitleCase(sizeStr))}]");
+                                    type = $"fixed {type}";
+                                    name = $"{name.Substring(0, arrayMatcher.Index)}[Constants.{TrimVKPrefix(ToTitleCase(sizeStr))}]";
                                 }
                             }
                         }
                     }
 
-                    members.AddLast($"\t\tpublic unsafe {proto.Key} {proto.Value};");
+                    members.AddLast($"\t\tpublic unsafe {type} {name};");
                 }
 
                 structureArray[index++] = $"\tpublic struct {ToVolkType(structure.Key)} {{\n" +
@@ -456,7 +458,7 @@ namespace Volk.Vulkan.Types {{
             int index = 0;
             foreach (var enumeration in enumerations.Where(pair => !bitmasks.ContainsKey(pair.Key))) {
                 enumerationArray[index++] = $"\tpublic enum {TrimVKPrefix(enumeration.Key)} {{\n" +
-                                            $"{string.Join(",\n", enumeration.Value.Select(e => $"\t\t{ToEnumerationValue(e)}").Distinct())}\n" +
+                                            $"{string.Join(",\n", enumeration.Value.Select(DeduceEnumerationPrototype).Select(proto => $"\t\t{proto.Item1} = {proto.Item2}").Distinct())}\n" +
                                             "\t}";
             }
 
@@ -465,7 +467,7 @@ namespace Volk.Vulkan.Types {{
                 bitmaskArray[index++] =
                     "\t[FlagsAttribute]\n" +
                     $"\tpublic enum {TrimVKPrefix(bitmask.Value.Key.Key)} : {ToVolkType(bitmask.Value.Key.Value.Element("type").Value)} {{\n" +
-                    $"{string.Join(",\n", bitmask.Value.Value.Select(e => $"\t\t{ToEnumerationValue(e)}").Distinct())}\n" +
+                    $"{string.Join(",\n", bitmask.Value.Value.Select(DeduceEnumerationPrototype).Select(proto => $"\t\t{proto.Item1} = {proto.Item2}").Distinct())}\n" +
                     "\t}";
             }
 
@@ -622,19 +624,20 @@ namespace Volk.Vulkan.Types {{
                     throw new Exception("No return type for command: " + cmd.Key);
                 }
 
-                var parameters = new LinkedList<KeyValuePair<string, string>>();
+                var parameters = new LinkedList<(string, string)>();
                 foreach (var parameter in cmd.Value.Elements("param")) {
-                    var newParameter = Declaration(parameter.Nodes());
+                    var (type, name) = DeducePrototype(parameter.Nodes());
 
-                    if (Regex.IsMatch(newParameter.Value, @"\[.*\]$")) {
-                        newParameter = new KeyValuePair<string, string>($"{newParameter.Key}[]", Regex.Replace(newParameter.Value, @"\[.*\]$", ""));
+                    if (Regex.IsMatch(name, @"\[.*\]$")) {
+                        type = $"{type}[]";
+                        name = Regex.Replace(name, @"\[.*\]$", "");
                     }
 
-                    parameters.AddLast(newParameter);
+                    parameters.AddLast((type, name));
                 }
 
                 commandsArray[index++] =
-                    $"{ToVolkType(returnType.Value)} {TrimVKPrefix(cmd.Key)}({string.Join(", ", parameters.Select(p => $"{p.Key} {p.Value}"))})";
+                    $"{ToVolkType(returnType.Value)} {TrimVKPrefix(cmd.Key)}({string.Join(", ", parameters.Select(proto => $"{proto.Item1} {proto.Item2}"))})";
             }
 
             using var commandsFile = new StreamWriter("Commands.cs", false);
@@ -788,23 +791,30 @@ namespace Volk.Vulkan.Types {{
             return builder.ToString();
         }
 
-        public static string ToEnumerationValue(XElement element) {
+        /// <summary>
+        /// Deduce enumeration value prototype (name and value)
+        /// </summary>
+        /// <param name="element">Element</param>
+        /// <returns>A tuple with the name and the value</returns>
+        /// <exception cref="Exception">Unable to deduce prototype</exception>
+        private static (string, string) DeduceEnumerationPrototype(XElement element) {
             string name = TrimVKPrefix(ToTitleCase(element.Attribute("name").Value));
 
             if (element.Attribute("alias") != null) {
-                return $"{name} = {TrimVKPrefix(ToTitleCase(element.Attribute("alias").Value))}";
+                return (name, TrimVKPrefix(ToTitleCase(element.Attribute("alias").Value)));
             }
 
             if (element.Attribute("bitpos") != null) {
-                return $"{name} = 1 << {TrimVKPrefix(element.Attribute("bitpos").Value)}";
+                return (name, $"1 << {TrimVKPrefix(element.Attribute("bitpos").Value)}");
             }
 
             if (element.Attribute("value") != null) {
-                return $"{name} = {element.Attribute("value").Value}";
+                return (name, element.Attribute("value").Value);
             }
 
             if (element.Attribute("offset") != null) {
                 int direction = element.Attribute("dir") != null && element.Attribute("dir").Value.First() == '-' ? -1 : 1;
+
                 string? extensionNumber = element.Attribute("extnumber") != null
                     ? element.Attribute("extnumber").Value
                     : element.Parent?.Parent?.Attribute("number")?.Value;
@@ -815,59 +825,85 @@ namespace Volk.Vulkan.Types {{
                 int value = direction * (1000000000 + (int.Parse(extensionNumber, CultureInfo.InvariantCulture.NumberFormat) - 1) * 1000 +
                                          int.Parse(element.Attribute("offset").Value));
 
-                return $"{name} = {value}";
+                return (name, value.ToString());
             }
 
-            throw new Exception($"Unable to decode: {element}");
+            throw new Exception($"Unsupported element: {element}");
         }
 
-        // TODO: Doc
-        public static string TrimVKPrefix(string str) {
+        /// <summary>
+        /// Remove "vk" prefix in a string if presents
+        /// </summary>
+        /// <param name="str">String</param>
+        /// <returns>String without vk prefix</returns>
+        private static string TrimVKPrefix(string str) {
             return str.StartsWith("Vk") || str.StartsWith("vk") ? str.Substring(2) : str;
         }
 
-        // TODO: Doc + rename
-        private static KeyValuePair<string, string> Declaration(IEnumerable<XNode> nodes) {
+        /// <summary>
+        /// Deduce prototype (type and name)
+        /// </summary>
+        /// <param name="nodes">List of nodes</param>
+        /// <returns>A tuple with the type and the name</returns>
+        /// <exception cref="Exception">Unsupported node or unable to determine prototype</exception>
+        private static (string, string) DeducePrototype(IEnumerable<XNode> nodes) {
             var name = new StringBuilder();
             var type = new StringBuilder();
 
             bool nameEncountered = false;
             foreach (var node in nodes) {
                 if (node is XElement element) {
-                    if (element.Name.LocalName == "name") {
-                        name.Append(element.Value);
-                        nameEncountered = true;
-                    } else if (element.Name.LocalName == "enum") {
-                        name.Append(element.Value);
-                    } else if (element.Name.LocalName == "type") {
-                        type.Append(element.Value);
-                    } else if (element.Name.LocalName == "comment") {
-                        // Skip
-                    } else {
-                        throw new Exception($"Unsupported element: {element}");
+                    switch (element.Name.LocalName) {
+                        case "name":
+                            name.Append(element.Value);
+                            nameEncountered = true;
+                            break;
+
+                        case "enum":
+                            name.Append(element.Value);
+                            break;
+
+                        case "type":
+                            type.Append(element.Value);
+                            break;
+
+                        case "comment": // Skip
+                            break;
+
+                        default:
+                            throw new Exception($"Unsupported element: {element}");
                     }
                 } else {
                     var content = node.ToString().Trim();
-                    if (content == "const" || content == "const struct" || content == "struct") {
-                        continue;
-                    }
 
-                    if (content == "* const*") {
-                        type.Append("**");
-                    } else {
-                        (nameEncountered ? name : type).Append(content);
+                    switch (content) {
+                        case "const":
+                        case "const struct":
+                        case "struct":
+                            continue;
+
+                        case "* const*":
+                            type.Append("**");
+                            break;
+
+                        default:
+                            (nameEncountered ? name : type).Append(content);
+                            break;
                     }
                 }
             }
 
             if (name.Length == 0 || type.Length == 0) {
-                throw new Exception("Unable to determine parameter");
+                throw new Exception("Unable to determine prototype");
             }
 
-            return new KeyValuePair<string, string>(ToVolkType(type.ToString()), ToCSharpParameter(name.ToString()));
+            return (ToVolkType(type.ToString()), ToCSharpParameter(name.ToString()));
         }
 
-        // TODO: Doc
+        /// <summary>
+        /// Generate the copyright comment for volk files
+        /// </summary>
+        /// <returns>Copyright</returns>
         private static string Copyright() {
             return $"// Copyright 2020-{DateTime.Now.Year} Volk Project\n" +
                    "// Licensed under Apache License 2.0 or any later version\n" +
