@@ -867,30 +867,33 @@ namespace Volk.Example {
                 CommandTable.QueuePresentKHR(_presentQueue, &presentInfo);
             }
 
-            _currentFrame = (_currentFrame + 1) % _swapChainImages.Length;
-            _frameCount += 1;
+            // Monitoring
+            if (_stopwatch == null || _stopwatch.Elapsed.Seconds > 0) {
+                if (_stopwatch != null) {
+                    if (_extraStatsEnabled) {
+                        var results = new ulong[2];
+                        fixed (void* ptr = results) {
+                            Assert(CommandTable.GetQueryPoolResults(_device, _timestampQueryPool, (uint) (_currentFrame * 2), 2, 2 * sizeof(ulong), ptr, sizeof(ulong),
+                                                                    QueryResultFlags.QueryResult64Bit | QueryResultFlags.QueryResultWaitBit),
+                                   Result.Success, "Query pool results gathering");
+                        }
 
-            // Frame monitoring
-            if (_stopwatch == null || _stopwatch.Elapsed.Seconds > 1) {
-                if (_extraStatsEnabled && _stopwatch != null) {
-                    var results = new ulong[2];
-                    fixed (void* ptr = results) {
-                        Assert(CommandTable.GetQueryPoolResults(_device, _timestampQueryPool, 0, 2, 2 * sizeof(ulong), ptr, sizeof(ulong),
-                                                                QueryResultFlags.QueryResult64Bit | QueryResultFlags.QueryResultWaitBit),
-                               Result.Success, "Query pool results gathering");
+                        var frameTime = _stopwatch.Elapsed.TotalMilliseconds / _frameCount;
+                        Glfw.SetWindowTitle(
+                            _window,
+                            $"Volk Example - VSync ({_vsyncEnabled}) - Fps ({1000 / frameTime:0}) - CPU/GPU Frame time ({frameTime:0.####} ms/{(results[1] - results[0]) * _gpuPeriod * 0.000001:0.####} ms)");
+                    } else {
+                        Glfw.SetWindowTitle(_window, $"Volk Example - VSync ({_vsyncEnabled})");
                     }
-
-                    Glfw.SetWindowTitle(
-                        _window,
-                        $"Volk Example - ({_frameCount / _stopwatch.Elapsed.TotalSeconds:0} fps) - VSync ({_vsyncEnabled}) - CPU/GPU Frame time ({(_stopwatch?.Elapsed.TotalMilliseconds ?? 0) / _frameCount:0.####} ms/{(results[1] - results[0]) * _gpuPeriod * 0.000001:0.####} ms)");
-                } else {
-                    Glfw.SetWindowTitle(_window, $"Volk Example - ({_frameCount} fps) - VSync ({_vsyncEnabled})");
                 }
 
                 _stopwatch = new Stopwatch();
                 _frameCount = 0;
                 _stopwatch.Start();
             }
+            
+            _currentFrame = (_currentFrame + 1) % _swapChainImages.Length;
+            _frameCount += 1;
         }
 
         private static void InitWindow() {
