@@ -4,18 +4,31 @@
         <OutputType>Exe</OutputType>
         <TargetFramework>netcoreapp3.1</TargetFramework>
         <RootNamespace>Volk.Example</RootNamespace>
-        
+
         <WarningsAsErrors>CS8600;CS8601;CS8602;CS8603</WarningsAsErrors>
 
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\volk\volk.csproj" />
+        <ProjectReference Include="..\volk\volk.csproj"/>
+
+        <!-- Exclude GLFW examples -->
+        <Compile Remove="submodules\glfw-net\Examples\**"/>
+        <EmbeddedResource Remove="submodules\glfw-net\Examples\**"/>
+        <None Remove="submodules\glfw-net\Examples\**"/>
     </ItemGroup>
 
+    <!-- Build jobs -->
     <ItemGroup>
-      <PackageReference Include="glfw-net" Version="3.3.1" />
+        <!-- Copy shaders -->
+        <ContentWithTargetPath Include="shaders\frag.spv">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <TargetPath>frag.spv</TargetPath>
+        </ContentWithTargetPath>
+        <ContentWithTargetPath Include="shaders\vert.spv">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+            <TargetPath>vert.spv</TargetPath>
+        </ContentWithTargetPath>
     </ItemGroup>
-
 </Project>

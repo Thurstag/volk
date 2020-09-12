@@ -2,6 +2,7 @@
 // https://vulkan-tutorial.com/ (https://vulkan-tutorial.com/code/15_hello_triangle.cpp)
 
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -15,42 +16,49 @@ using Constants = GLFW.Constants;
 using Exception = System.Exception;
 
 namespace Volk.Example {
-    class Program {
-        const int MaxFramesInFlight = 2;
+    /// <summary>
+    /// Entry point
+    /// </summary>
+    internal static class Program {
+        private const int WindowWidth = 800;
+        private const int WindowHeight = 600;
 
-        const int WindowWidth = 800;
-        const int WindowHeight = 600;
+        private static Window _window;
+        private static IntPtr _instance;
+        private static IntPtr _physicalDevice;
+        private static IntPtr _device;
+        private static IntPtr _surface;
+        private static IntPtr _renderPass;
+        private static IntPtr _pipelineLayout;
+        private static IntPtr _graphicsPipeline;
+        private static IntPtr _commandPool;
+        private static IntPtr _graphicsQueue, _presentQueue;
 
-        static Window _window;
-        static IntPtr _instance;
-        static IntPtr _physicalDevice;
-        static IntPtr _device;
-        static IntPtr _surface;
-        static IntPtr _renderPass;
-        static IntPtr _pipelineLayout;
-        static IntPtr _graphicsPipeline;
-        static IntPtr _commandPool;
-        static IntPtr _graphicsQueue, _presentQueue;
+        private static IntPtr[] _swapChainImageViews;
+        private static IntPtr[] _swapChainImages;
+        private static Format _swapChainImageFormat;
+        private static Extent2D _swapChainExtent;
+        private static IntPtr _swapchain;
 
-        static IntPtr[] _swapChainImageViews;
-        static IntPtr[] _swapChainImages;
-        static Format _swapChainImageFormat;
-        static Extent2D _swapChainExtent;
-        static IntPtr _swapchain;
+        private static IntPtr[] _swapChainFramebuffers;
+        private static IntPtr[] _commandBuffers;
 
-        static IntPtr[] _swapChainFramebuffers;
-        static IntPtr[] _commandBuffers;
+        private static IntPtr[] _imageAvailableSemaphores;
+        private static IntPtr[] _renderFinishedSemaphores;
+        private static IntPtr[] _inFlightFences;
+        private static IntPtr[] _imagesInFlight;
 
-        static IntPtr[] _imageAvailableSemaphores;
-        static IntPtr[] _renderFinishedSemaphores;
-        static IntPtr[] _inFlightFences;
-        static IntPtr[] _imagesInFlight;
+        private static bool _vsyncEnabled;
+        private static bool _extraStatsEnabled;
 
-        static int _currentFrame;
-        static ulong _frameCount;
-        static Stopwatch _stopwatch;
+        private static IntPtr _timestampQueryPool;
+        private static float _gpuPeriod;
 
-        struct QueueFamilyIndices {
+        private static int _currentFrame;
+        private static ulong _frameCount;
+        private static Stopwatch _stopwatch;
+
+        private struct QueueFamilyIndices {
             public uint? GraphicsFamily;
             public uint? PresentFamily;
 
@@ -59,24 +67,38 @@ namespace Volk.Example {
             }
         }
 
-        struct SwapChainSupportDetails {
+        private struct SwapChainSupportDetails {
             public SurfaceCapabilitiesKHR Capabilities;
             public SurfaceFormatKHR[] Formats;
             public PresentModeKHR[] PresentModes;
         }
 
-        static void Main() {
+        private static void Main(string[] args) {
             // Initialize volk
             Functions.Initialize();
 
+            // Check args
+            if (args.Contains("-vsync")) {
+                _vsyncEnabled = true;
+            }
+
+            if (args.Contains("-stats")) {
+                _extraStatsEnabled = true;
+            }
+
+            // Init GLFW and Vulkan
             InitWindow();
             InitVulkan();
+
+            // Draw frames
             MainLoop();
+
+            // Clean-up
             Cleanup();
         }
 
         private static unsafe void Cleanup() {
-            for (int i = 0; i < MaxFramesInFlight; i++) {
+            for (var i = 0; i < _swapChainImages.Length; i++) {
                 CommandTable.DestroySemaphore(_device, _renderFinishedSemaphores[i], (AllocationCallbacks*) IntPtr.Zero);
                 CommandTable.DestroySemaphore(_device, _imageAvailableSemaphores[i], (AllocationCallbacks*) IntPtr.Zero);
                 CommandTable.DestroyFence(_device, _inFlightFences[i], (AllocationCallbacks*) IntPtr.Zero);
@@ -96,6 +118,8 @@ namespace Volk.Example {
                 CommandTable.DestroyImageView(_device, imageView, (AllocationCallbacks*) IntPtr.Zero);
             }
 
+            CommandTable.DestroyQueryPool(_device, _timestampQueryPool, (AllocationCallbacks*) IntPtr.Zero);
+
             CommandTable.DestroySwapchainKHR(_device, _swapchain, (AllocationCallbacks*) IntPtr.Zero);
             CommandTable.DestroyDevice(_device, (AllocationCallbacks*) IntPtr.Zero);
 
@@ -108,7 +132,7 @@ namespace Volk.Example {
             Functions.Destroy();
         }
 
-        static void InitVulkan() {
+        private static void InitVulkan() {
             CreateInstance();
             Functions.LoadInstance(_instance);
             CreateSurface();
@@ -120,14 +144,27 @@ namespace Volk.Example {
             CreateGraphicsPipeline();
             CreateFramebuffers();
             CreateCommandPool();
+
+            // Create timestamp query pool
+            unsafe {
+                fixed (IntPtr* ptr = &_timestampQueryPool) {
+                    var createInfo = new QueryPoolCreateInfo {
+                        sType = StructureType.StructureTypeQueryPoolCreateInfo,
+                        queryCount = 128,
+                        queryType = QueryType.QueryTypeTimestamp
+                    };
+                    CommandTable.CreateQueryPool(_device, &createInfo, (AllocationCallbacks*) IntPtr.Zero, ptr);
+                }
+            }
+
             CreateCommandBuffers();
             CreateSyncObjects();
         }
 
         private static unsafe void CreateSyncObjects() {
-            _imageAvailableSemaphores = new IntPtr[MaxFramesInFlight];
-            _renderFinishedSemaphores = new IntPtr[MaxFramesInFlight];
-            _inFlightFences = new IntPtr[MaxFramesInFlight];
+            _imageAvailableSemaphores = new IntPtr[_swapChainImages.Length];
+            _renderFinishedSemaphores = new IntPtr[_swapChainImages.Length];
+            _inFlightFences = new IntPtr[_swapChainImages.Length];
             _imagesInFlight = Enumerable.Range(0, _swapChainImages.Length).Select(i => IntPtr.Zero).ToArray();
 
             var semaphoreInfo = new SemaphoreCreateInfo {
@@ -139,23 +176,20 @@ namespace Volk.Example {
                 flags = FenceCreateFlags.FenceCreateSignaledBit
             };
 
-            for (int i = 0; i < MaxFramesInFlight; i++) {
+            for (var i = 0; i < _swapChainImages.Length; i++) {
                 fixed (IntPtr* availablePtr = &_imageAvailableSemaphores[i]) {
-                    if (CommandTable.CreateSemaphore(_device, &semaphoreInfo, (AllocationCallbacks*) IntPtr.Zero, availablePtr) != Result.Success) {
-                        throw new Exception("failed to create synchronization objects for a frame!");
-                    }
+                    Assert(CommandTable.CreateSemaphore(_device, &semaphoreInfo, (AllocationCallbacks*) IntPtr.Zero, availablePtr), Result.Success,
+                           "Image available semaphore creation");
                 }
 
                 fixed (IntPtr* renderPtr = &_renderFinishedSemaphores[i]) {
-                    if (CommandTable.CreateSemaphore(_device, &semaphoreInfo, (AllocationCallbacks*) IntPtr.Zero, renderPtr) != Result.Success) {
-                        throw new Exception("failed to create synchronization objects for a frame!");
-                    }
+                    Assert(CommandTable.CreateSemaphore(_device, &semaphoreInfo, (AllocationCallbacks*) IntPtr.Zero, renderPtr), Result.Success,
+                           "Rendering end semaphore creation");
                 }
 
                 fixed (IntPtr* flightPtr = &_inFlightFences[i]) {
-                    if (CommandTable.CreateFence(_device, &fenceInfo, (AllocationCallbacks*) IntPtr.Zero, flightPtr) != Result.Success) {
-                        throw new Exception("failed to create synchronization objects for a frame!");
-                    }
+                    Assert(CommandTable.CreateFence(_device, &fenceInfo, (AllocationCallbacks*) IntPtr.Zero, flightPtr), Result.Success,
+                           "Frame fence creation");
                 }
             }
         }
@@ -170,55 +204,61 @@ namespace Volk.Example {
                 commandBufferCount = (uint) _commandBuffers.Length
             };
 
-            fixed (IntPtr* commandPtr = &_commandBuffers[0]) {
-                if (CommandTable.AllocateCommandBuffers(_device, &allocInfo, commandPtr) != Result.Success) {
-                    throw new Exception("failed to allocate command buffers!");
-                }
+            fixed (IntPtr* commandPtr = _commandBuffers) {
+                Assert(CommandTable.AllocateCommandBuffers(_device, &allocInfo, commandPtr), Result.Success, "Command buffers allocation");
             }
 
-            for (int i = 0; i < _commandBuffers.Length; i++) {
+            for (var i = 0; i < _commandBuffers.Length; i++) {
                 var beginInfo = new CommandBufferBeginInfo {
                     sType = StructureType.StructureTypeCommandBufferBeginInfo
                 };
 
-                if (CommandTable.BeginCommandBuffer(_commandBuffers[i], &beginInfo) != Result.Success) {
-                    throw new Exception("failed to begin recording command buffer!");
-                }
+                Assert(CommandTable.BeginCommandBuffer(_commandBuffers[i], &beginInfo), Result.Success, "Command buffer record beginning");
+                {
+                    var renderPassInfo = new RenderPassBeginInfo {
+                        sType = StructureType.StructureTypeRenderPassBeginInfo,
+                        renderPass = _renderPass,
+                        framebuffer = _swapChainFramebuffers[i],
+                        renderArea = new Rect2D {
+                            extent = _swapChainExtent,
+                            offset = new Offset2D {
+                                x = 0,
+                                y = 0
+                            }
+                        }
+                    };
 
-                var renderPassInfo = new RenderPassBeginInfo {
-                    sType = StructureType.StructureTypeRenderPassBeginInfo,
-                    renderPass = _renderPass,
-                    framebuffer = _swapChainFramebuffers[i],
-                    renderArea = new Rect2D {
-                        extent = _swapChainExtent,
-                        offset = new Offset2D {
-                            x = 0,
-                            y = 0
+                    var clearValue = new ClearValue();
+                    clearValue.color.float32[3] = 1.0f;
+                    renderPassInfo.clearValueCount = 1;
+                    renderPassInfo.clearValues = &clearValue;
+
+                    CommandTable.CmdBeginRenderPass(_commandBuffers[i], &renderPassInfo, SubpassContents.SubpassContentsInline);
+                    {
+                        // Record timestamp start
+                        if (_extraStatsEnabled) {
+                            CommandTable.ResetQueryPool(_device, _timestampQueryPool, (uint) (i * 2), 2);
+                            CommandTable.CmdWriteTimestamp(_commandBuffers[i], PipelineStageFlags.PipelineStageBottomOfPipeBit, _timestampQueryPool,
+                                                           (uint) (i * 2));
+                        }
+
+                        CommandTable.CmdBindPipeline(_commandBuffers[i], PipelineBindPoint.PipelineBindPointGraphics, _graphicsPipeline);
+
+                        CommandTable.CmdDraw(_commandBuffers[i], 3, 1, 0, 0);
+
+                        if (_extraStatsEnabled) {
+                            CommandTable.CmdWriteTimestamp(_commandBuffers[i], PipelineStageFlags.PipelineStageBottomOfPipeBit, _timestampQueryPool,
+                                                           (uint) (i * 2) + 1);
                         }
                     }
-                };
-
-                var clearValue = new ClearValue();
-                clearValue.color.float32[3] = 1.0f;
-                renderPassInfo.clearValueCount = 1;
-                renderPassInfo.clearValues = &clearValue;
-
-                CommandTable.CmdBeginRenderPass(_commandBuffers[i], &renderPassInfo, SubpassContents.SubpassContentsInline);
-
-                CommandTable.CmdBindPipeline(_commandBuffers[i], PipelineBindPoint.PipelineBindPointGraphics, _graphicsPipeline);
-
-                CommandTable.CmdDraw(_commandBuffers[i], 3, 1, 0, 0);
-
-                CommandTable.CmdEndRenderPass(_commandBuffers[i]);
-
-                if (CommandTable.EndCommandBuffer(_commandBuffers[i]) != Result.Success) {
-                    throw new Exception("failed to record command buffer!");
+                    CommandTable.CmdEndRenderPass(_commandBuffers[i]);
                 }
+                Assert(CommandTable.EndCommandBuffer(_commandBuffers[i]), Result.Success, "Command buffer record ending");
             }
         }
 
         private static unsafe void CreateCommandPool() {
-            QueueFamilyIndices queueFamilyIndices = FindQueueFamilies(_physicalDevice);
+            var queueFamilyIndices = FindQueueFamilies(_physicalDevice);
 
             var poolInfo = new CommandPoolCreateInfo {
                 sType = StructureType.StructureTypeCommandPoolCreateInfo,
@@ -226,9 +266,8 @@ namespace Volk.Example {
             };
 
             IntPtr commandPool = new IntPtr();
-            if (CommandTable.CreateCommandPool(_device, &poolInfo, (AllocationCallbacks*) IntPtr.Zero, &commandPool) != Result.Success) {
-                throw new Exception("failed to create command pool!");
-            }
+            Assert(CommandTable.CreateCommandPool(_device, &poolInfo, (AllocationCallbacks*) IntPtr.Zero, &commandPool), Result.Success,
+                   "Command pool creation");
 
             _commandPool = commandPool;
         }
@@ -248,27 +287,24 @@ namespace Volk.Example {
 
                 fixed (IntPtr* framePtr = &_swapChainFramebuffers[i], attachmentPtr = &_swapChainImageViews[i]) {
                     framebufferInfo.attachments = attachmentPtr;
-
-                    if (CommandTable.CreateFramebuffer(_device, &framebufferInfo, (AllocationCallbacks*) IntPtr.Zero, framePtr) != Result.Success) {
-                        throw new Exception("failed to create framebuffer!");
-                    }
+                    Assert(CommandTable.CreateFramebuffer(_device, &framebufferInfo, (AllocationCallbacks*) IntPtr.Zero, framePtr), Result.Success,
+                           "Framebuffer creation");
                 }
             }
         }
 
-        static unsafe IntPtr CreateShaderModule(byte[] code) {
+        private static unsafe IntPtr CreateShaderModule(byte[] code) {
             var createInfo = new ShaderModuleCreateInfo {
                 sType = StructureType.StructureTypeShaderModuleCreateInfo,
                 codeSize = new nuint((uint) code.Length)
             };
 
-            fixed (byte* codePtr = &code[0]) {
+            fixed (byte* codePtr = code) {
                 createInfo.code = (uint*) codePtr;
 
                 IntPtr shaderModule;
-                if (CommandTable.CreateShaderModule(_device, &createInfo, (AllocationCallbacks*) IntPtr.Zero, &shaderModule) != Result.Success) {
-                    throw new Exception("failed to create shader module!");
-                }
+                Assert(CommandTable.CreateShaderModule(_device, &createInfo, (AllocationCallbacks*) IntPtr.Zero, &shaderModule), Result.Success,
+                       "Shader module creation");
 
                 return shaderModule;
             }
@@ -278,8 +314,8 @@ namespace Volk.Example {
             var vertShaderCode = File.ReadAllBytes("./vert.spv");
             var fragShaderCode = File.ReadAllBytes("./frag.spv");
 
-            IntPtr vertShaderModule = CreateShaderModule(vertShaderCode);
-            IntPtr fragShaderModule = CreateShaderModule(fragShaderCode);
+            var vertShaderModule = CreateShaderModule(vertShaderCode);
+            var fragShaderModule = CreateShaderModule(fragShaderCode);
 
             var vertShaderStageInfo = new PipelineShaderStageCreateInfo {
                 sType = StructureType.StructureTypePipelineShaderStageCreateInfo,
@@ -295,7 +331,7 @@ namespace Volk.Example {
                 name = (byte*) Marshal.StringToHGlobalAnsi("main").ToPointer()
             };
 
-            var shaderStages = new[] {vertShaderStageInfo, fragShaderStageInfo};
+            var shaderStages = new[] { vertShaderStageInfo, fragShaderStageInfo };
 
             var vertexInputInfo = new PipelineVertexInputStateCreateInfo {
                 sType = StructureType.StructureTypePipelineVertexInputStateCreateInfo,
@@ -375,11 +411,9 @@ namespace Volk.Example {
                 pushConstantRangeCount = 0
             };
 
-            IntPtr pipelineLayout = new IntPtr();
-            if (CommandTable.CreatePipelineLayout(_device, &pipelineLayoutInfo, (AllocationCallbacks*) IntPtr.Zero, &pipelineLayout) !=
-                Result.Success) {
-                throw new Exception("failed to create pipeline layout!");
-            }
+            var pipelineLayout = new IntPtr();
+            Assert(CommandTable.CreatePipelineLayout(_device, &pipelineLayoutInfo, (AllocationCallbacks*) IntPtr.Zero, &pipelineLayout),
+                   Result.Success, "Pipeline layout creation");
 
             _pipelineLayout = pipelineLayout;
 
@@ -398,15 +432,12 @@ namespace Volk.Example {
                 basePipelineHandle = IntPtr.Zero
             };
 
-            fixed (PipelineShaderStageCreateInfo* shaderStagePtr = &shaderStages[0]) {
+            fixed (PipelineShaderStageCreateInfo* shaderStagePtr = shaderStages) {
                 pipelineInfo.stages = shaderStagePtr;
 
-                IntPtr graphicsPipeline = new IntPtr();
-                if (CommandTable.CreateGraphicsPipelines(_device, IntPtr.Zero, 1, &pipelineInfo, (AllocationCallbacks*) IntPtr.Zero,
-                        &graphicsPipeline) !=
-                    Result.Success) {
-                    throw new Exception("failed to create graphics pipeline!");
-                }
+                var graphicsPipeline = new IntPtr();
+                Assert(CommandTable.CreateGraphicsPipelines(_device, IntPtr.Zero, 1, &pipelineInfo, (AllocationCallbacks*) IntPtr.Zero,
+                                                            &graphicsPipeline), Result.Success, "Graphics pipeline creation");
 
                 _graphicsPipeline = graphicsPipeline;
             }
@@ -457,10 +488,9 @@ namespace Volk.Example {
                 dependencies = &dependency
             };
 
-            IntPtr renderPass = new IntPtr();
-            if (CommandTable.CreateRenderPass(_device, &renderPassInfo, (AllocationCallbacks*) IntPtr.Zero, &renderPass) != Result.Success) {
-                throw new Exception("failed to create render pass!");
-            }
+            var renderPass = new IntPtr();
+            Assert(CommandTable.CreateRenderPass(_device, &renderPassInfo, (AllocationCallbacks*) IntPtr.Zero, &renderPass), Result.Success,
+                   "Render pass creation");
 
             _renderPass = renderPass;
         }
@@ -468,7 +498,7 @@ namespace Volk.Example {
         private static unsafe void CreateImageViews() {
             _swapChainImageViews = new IntPtr[_swapChainImages.Length];
 
-            for (int i = 0; i < _swapChainImages.Length; i++) {
+            for (var i = 0; i < _swapChainImages.Length; i++) {
                 var createInfo = new ImageViewCreateInfo {
                     sType = StructureType.StructureTypeImageViewCreateInfo,
                     image = _swapChainImages[i],
@@ -490,21 +520,20 @@ namespace Volk.Example {
                 };
 
                 fixed (IntPtr* imageViewPtr = &_swapChainImageViews[i]) {
-                    if (CommandTable.CreateImageView(_device, &createInfo, (AllocationCallbacks*) IntPtr.Zero, imageViewPtr) != Result.Success) {
-                        throw new Exception("failed to create image views!");
-                    }
+                    Assert(CommandTable.CreateImageView(_device, &createInfo, (AllocationCallbacks*) IntPtr.Zero, imageViewPtr), Result.Success,
+                           "Image views creation");
                 }
             }
         }
 
         private static unsafe void CreateSwapChain() {
-            SwapChainSupportDetails swapChainSupport = QuerySwapChainSupport(_physicalDevice);
+            var swapChainSupport = QuerySwapChainSupport(_physicalDevice);
 
-            SurfaceFormatKHR surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.Formats);
-            PresentModeKHR presentMode = ChooseSwapPresentMode(swapChainSupport.PresentModes);
-            Extent2D extent = ChooseSwapExtent(swapChainSupport.Capabilities);
+            var surfaceFormat = ChooseSwapSurfaceFormat(swapChainSupport.Formats);
+            var presentMode = ChooseSwapPresentMode(swapChainSupport.PresentModes);
+            var extent = ChooseSwapExtent(swapChainSupport.Capabilities);
 
-            uint imageCount = swapChainSupport.Capabilities.minImageCount + 1;
+            var imageCount = swapChainSupport.Capabilities.minImageCount + 1;
             if (swapChainSupport.Capabilities.maxImageCount > 0 && imageCount > swapChainSupport.Capabilities.maxImageCount) {
                 imageCount = swapChainSupport.Capabilities.maxImageCount;
             }
@@ -520,10 +549,10 @@ namespace Volk.Example {
                 imageUsage = ImageUsageFlags.ImageUsageColorAttachmentBit
             };
 
-            QueueFamilyIndices indices = FindQueueFamilies(_physicalDevice);
-            var queueFamilyIndices = new[] {indices.GraphicsFamily.Value, indices.PresentFamily.Value};
+            var indices = FindQueueFamilies(_physicalDevice);
+            var queueFamilyIndices = new[] { indices.GraphicsFamily.Value, indices.PresentFamily.Value };
 
-            fixed (uint* queueFamilyPtr = &queueFamilyIndices[0]) {
+            fixed (uint* queueFamilyPtr = queueFamilyIndices) {
                 if (indices.GraphicsFamily != indices.PresentFamily) {
                     createInfo.imageSharingMode = SharingMode.SharingModeConcurrent;
                     createInfo.queueFamilyIndexCount = 2;
@@ -538,17 +567,16 @@ namespace Volk.Example {
                 createInfo.clipped = Vulkan.Constants.True;
                 createInfo.oldSwapchain = IntPtr.Zero;
 
-                IntPtr swapChain = new IntPtr();
-                if (CommandTable.CreateSwapchainKHR(_device, &createInfo, (AllocationCallbacks*) IntPtr.Zero, &swapChain) != Result.Success) {
-                    throw new Exception("failed to create swap chain!");
-                }
+                var swapChain = new IntPtr();
+                Assert(CommandTable.CreateSwapchainKHR(_device, &createInfo, (AllocationCallbacks*) IntPtr.Zero, &swapChain), Result.Success,
+                       "Swapchain creation");
 
                 _swapchain = swapChain;
             }
 
             CommandTable.GetSwapchainImagesKHR(_device, _swapchain, &imageCount, (IntPtr*) IntPtr.Zero);
             _swapChainImages = new IntPtr[imageCount];
-            fixed (IntPtr* imagePtr = &_swapChainImages[0]) {
+            fixed (IntPtr* imagePtr = _swapChainImages) {
                 CommandTable.GetSwapchainImagesKHR(_device, _swapchain, &imageCount, imagePtr);
             }
 
@@ -558,7 +586,7 @@ namespace Volk.Example {
             Console.WriteLine($"Create a swapchain with {imageCount} frames and {presentMode} mode");
         }
 
-        static SurfaceFormatKHR ChooseSwapSurfaceFormat(SurfaceFormatKHR[] availableFormats) {
+        private static SurfaceFormatKHR ChooseSwapSurfaceFormat(IReadOnlyList<SurfaceFormatKHR> availableFormats) {
             foreach (var availableFormat in availableFormats) {
                 if (availableFormat.format == Format.FormatB8g8r8a8Srgb && availableFormat.colorSpace == ColorSpaceKHR.ColorspaceSrgbNonlinearKhr) {
                     return availableFormat;
@@ -568,7 +596,11 @@ namespace Volk.Example {
             return availableFormats[0];
         }
 
-        static PresentModeKHR ChooseSwapPresentMode(PresentModeKHR[] availablePresentModes) {
+        private static PresentModeKHR ChooseSwapPresentMode(IEnumerable<PresentModeKHR> availablePresentModes) {
+            if (!_vsyncEnabled) {
+                return PresentModeKHR.PresentModeImmediateKhr;
+            }
+
             foreach (var availablePresentMode in availablePresentModes) {
                 if (availablePresentMode == PresentModeKHR.PresentModeMailboxKhr) {
                     return availablePresentMode;
@@ -578,7 +610,7 @@ namespace Volk.Example {
             return PresentModeKHR.PresentModeFifoKhr;
         }
 
-        static Extent2D ChooseSwapExtent(SurfaceCapabilitiesKHR capabilities) {
+        private static Extent2D ChooseSwapExtent(SurfaceCapabilitiesKHR capabilities) {
             if (capabilities.currentExtent.width != uint.MaxValue) {
                 return capabilities.currentExtent;
             } else {
@@ -594,7 +626,7 @@ namespace Volk.Example {
             }
         }
 
-        static unsafe SwapChainSupportDetails QuerySwapChainSupport(IntPtr device) {
+        private static unsafe SwapChainSupportDetails QuerySwapChainSupport(IntPtr device) {
             var details = new SwapChainSupportDetails();
 
             CommandTable.GetPhysicalDeviceSurfaceCapabilitiesKHR(device, _surface, &details.Capabilities);
@@ -604,7 +636,7 @@ namespace Volk.Example {
 
             if (formatCount != 0) {
                 details.Formats = new SurfaceFormatKHR[formatCount];
-                fixed (SurfaceFormatKHR* formatPtr = &details.Formats[0]) {
+                fixed (SurfaceFormatKHR* formatPtr = details.Formats) {
                     CommandTable.GetPhysicalDeviceSurfaceFormatsKHR(device, _surface, &formatCount, formatPtr);
                 }
             }
@@ -614,7 +646,7 @@ namespace Volk.Example {
 
             if (presentModeCount != 0) {
                 details.PresentModes = new PresentModeKHR[presentModeCount];
-                fixed (PresentModeKHR* modePtr = &details.PresentModes[0]) {
+                fixed (PresentModeKHR* modePtr = details.PresentModes) {
                     CommandTable.GetPhysicalDeviceSurfacePresentModesKHR(device, _surface, &presentModeCount, modePtr);
                 }
             }
@@ -623,12 +655,12 @@ namespace Volk.Example {
         }
 
         private static unsafe void CreateLogicalDevice() {
-            QueueFamilyIndices indices = FindQueueFamilies(_physicalDevice);
+            var indices = FindQueueFamilies(_physicalDevice);
 
-            var uniqueQueueFamilies = new[] {indices.GraphicsFamily.Value, indices.PresentFamily.Value};
+            var uniqueQueueFamilies = new[] { indices.GraphicsFamily.Value, indices.PresentFamily.Value };
             var queueCreateInfos = new DeviceQueueCreateInfo[uniqueQueueFamilies.Length];
 
-            float queuePriority = 1.0f;
+            var queuePriority = 1.0f;
             for (int i = 0; i < uniqueQueueFamilies.Length; i++) {
                 queueCreateInfos[i] = new DeviceQueueCreateInfo {
                     sType = StructureType.StructureTypeDeviceQueueCreateInfo,
@@ -639,7 +671,7 @@ namespace Volk.Example {
             }
 
             var deviceFeatures = new PhysicalDeviceFeatures();
-            var deviceExtensions = new[] {(byte*) Marshal.StringToHGlobalAnsi("VK_KHR_swapchain").ToPointer()};
+            var deviceExtensions = new[] { (byte*) Marshal.StringToHGlobalAnsi("VK_KHR_swapchain").ToPointer() };
 
             var createInfo = new DeviceCreateInfo {
                 sType = StructureType.StructureTypeDeviceCreateInfo,
@@ -649,14 +681,13 @@ namespace Volk.Example {
                 enabledLayerCount = 0
             };
 
-            fixed (void* extensionPtr = &deviceExtensions[0], infoPtr = &queueCreateInfos[0]) {
+            fixed (void* extensionPtr = deviceExtensions, infoPtr = queueCreateInfos) {
                 createInfo.queueCreateInfos = (DeviceQueueCreateInfo*) infoPtr;
                 createInfo.enabledExtensionNames = (byte**) extensionPtr;
 
-                IntPtr device = new IntPtr();
-                if (CommandTable.CreateDevice(_physicalDevice, &createInfo, (AllocationCallbacks*) IntPtr.Zero, &device) != Result.Success) {
-                    throw new Exception("failed to create logical device!");
-                }
+                var device = new IntPtr();
+                Assert(CommandTable.CreateDevice(_physicalDevice, &createInfo, (AllocationCallbacks*) IntPtr.Zero, &device), Result.Success,
+                       "Logical device creation");
 
                 _device = device;
             }
@@ -665,7 +696,7 @@ namespace Volk.Example {
             Functions.LoadDevice(_device);
 
             var queues = new IntPtr[2];
-            fixed (IntPtr* graphicsQueue = &queues[0], presentQueue = &queues[1]) {
+            fixed (IntPtr* graphicsQueue = queues, presentQueue = &queues[1]) {
                 CommandTable.GetDeviceQueue(_device, indices.GraphicsFamily.Value, 0, graphicsQueue);
                 CommandTable.GetDeviceQueue(_device, indices.PresentFamily.Value, 0, presentQueue);
             }
@@ -681,7 +712,7 @@ namespace Volk.Example {
             CommandTable.GetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, (QueueFamilyProperties*) IntPtr.Zero.ToPointer());
 
             var queueFamilies = new QueueFamilyProperties[queueFamilyCount];
-            fixed (QueueFamilyProperties* queueFamiliesPtr = &queueFamilies[0]) {
+            fixed (QueueFamilyProperties* queueFamiliesPtr = queueFamilies) {
                 CommandTable.GetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamiliesPtr);
             }
 
@@ -717,7 +748,7 @@ namespace Volk.Example {
             }
 
             var devices = new IntPtr[deviceCount];
-            fixed (IntPtr* devicesPtr = &devices[0]) {
+            fixed (IntPtr* devicesPtr = devices) {
                 CommandTable.EnumeratePhysicalDevices(_instance, &deviceCount, devicesPtr);
             }
 
@@ -731,6 +762,7 @@ namespace Volk.Example {
             CommandTable.GetPhysicalDeviceProperties(_physicalDevice, &properties);
 
             Console.WriteLine($"Select device: {ToString(properties.deviceName)} ({properties.deviceType})");
+            _gpuPeriod = properties.limits.timestampPeriod;
         }
 
         private static unsafe string ToString(byte* str) {
@@ -740,13 +772,12 @@ namespace Volk.Example {
         }
 
         private static void CreateSurface() {
-            if (GLFW.Vulkan.CreateWindowSurface(_instance, _window, IntPtr.Zero, out _surface) != (int) Result.Success) {
-                throw new Exception("failed to create window surface");
-            }
+            Assert((Result) GLFW.Vulkan.CreateWindowSurface(_instance, _window, IntPtr.Zero, out _surface), Result.Success,
+                   "Window surface creation");
         }
 
-        static unsafe void CreateInstance() {
-            ApplicationInfo appInfo = new ApplicationInfo {
+        private static unsafe void CreateInstance() {
+            var appInfo = new ApplicationInfo {
                 sType = StructureType.StructureTypeApplicationInfo,
                 applicationVersion = Utilities.MakeVersion(1, 0, 0),
                 engineVersion = Utilities.MakeVersion(1, 0, 0),
@@ -755,23 +786,21 @@ namespace Volk.Example {
                 engineName = (byte*) IntPtr.Zero.ToPointer()
             };
 
-            InstanceCreateInfo createInfo = new InstanceCreateInfo {
+            var createInfo = new InstanceCreateInfo {
                 sType = StructureType.StructureTypeInstanceCreateInfo,
                 applicationInfo = &appInfo
             };
 
-            fixed (void* extensions =
-                &(new[] {Marshal.StringToHGlobalAnsi("VK_KHR_win32_surface"), Marshal.StringToHGlobalAnsi("VK_KHR_surface")})[0]) {
-                // TODO: Use GLFW.Vulkan.GetRequiredInstanceExtensions(); when it's fixed
+            var extensions = GLFW.Vulkan.GetRequiredInstanceExtensions().Select(Marshal.StringToHGlobalAnsi).ToArray();
+            fixed (void* ptr = extensions) {
                 createInfo.enabledExtensionCount = 2;
-                createInfo.enabledExtensionNames = (byte**) extensions;
+                createInfo.enabledExtensionNames = (byte**) ptr;
                 createInfo.enabledLayerCount = 0;
                 createInfo.next = IntPtr.Zero.ToPointer();
 
-                IntPtr instance = IntPtr.Zero;
-                if (CommandTable.CreateInstance(&createInfo, (AllocationCallbacks*) IntPtr.Zero.ToPointer(), &instance) != Result.Success) {
-                    throw new Exception("failed to create instance!");
-                }
+                var instance = IntPtr.Zero;
+                Assert(CommandTable.CreateInstance(&createInfo, (AllocationCallbacks*) IntPtr.Zero.ToPointer(), &instance), Result.Success,
+                       "Instance creation");
 
                 _instance = instance;
             }
@@ -810,9 +839,9 @@ namespace Volk.Example {
                 CommandTable.ResetFences(_device, 1, fencePtr);
             }
 
-            var waitStages = new[] {PipelineStageFlags.PipelineStageColorAttachmentOutputBit};
+            var waitStages = new[] { PipelineStageFlags.PipelineStageColorAttachmentOutputBit };
             submitInfo.waitSemaphoreCount = 1;
-            fixed (void* semaphorePtr = &_imageAvailableSemaphores[_currentFrame], stagePtr = &waitStages[0], commandPtr =
+            fixed (void* semaphorePtr = &_imageAvailableSemaphores[_currentFrame], stagePtr = waitStages, commandPtr =
                 &_commandBuffers[imageIndex], renderSemaphorePtr = &_renderFinishedSemaphores[_currentFrame]) {
                 submitInfo.waitSemaphores = (IntPtr*) semaphorePtr;
                 submitInfo.waitDstStageMask = (PipelineStageFlags*) stagePtr;
@@ -821,9 +850,8 @@ namespace Volk.Example {
                 submitInfo.signalSemaphoreCount = 1;
                 submitInfo.signalSemaphores = (IntPtr*) renderSemaphorePtr;
 
-                if (CommandTable.QueueSubmit(_graphicsQueue, 1, &submitInfo, _inFlightFences[_currentFrame]) != Result.Success) {
-                    throw new Exception("failed to submit draw command buffer!");
-                }
+                Assert(CommandTable.QueueSubmit(_graphicsQueue, 1, &submitInfo, _inFlightFences[_currentFrame]), Result.Success,
+                       "Draw command submission");
             }
 
             var presentInfo = new PresentInfoKHR {
@@ -839,12 +867,25 @@ namespace Volk.Example {
                 CommandTable.QueuePresentKHR(_presentQueue, &presentInfo);
             }
 
-            _currentFrame = (_currentFrame + 1) % MaxFramesInFlight;
+            _currentFrame = (_currentFrame + 1) % _swapChainImages.Length;
             _frameCount += 1;
 
             // Frame monitoring
             if (_stopwatch == null || _stopwatch.Elapsed.Seconds > 1) {
-                Glfw.SetWindowTitle(_window, $"Vulkan ({_frameCount} fps)");
+                if (_extraStatsEnabled && _stopwatch != null) {
+                    var results = new ulong[2];
+                    fixed (void* ptr = results) {
+                        Assert(CommandTable.GetQueryPoolResults(_device, _timestampQueryPool, 0, 2, 2 * sizeof(ulong), ptr, sizeof(ulong),
+                                                                QueryResultFlags.QueryResult64Bit | QueryResultFlags.QueryResultWaitBit),
+                               Result.Success, "Query pool results gathering");
+                    }
+
+                    Glfw.SetWindowTitle(
+                        _window,
+                        $"Volk Example - ({_frameCount / _stopwatch.Elapsed.TotalSeconds:0} fps) - VSync ({_vsyncEnabled}) - CPU/GPU Frame time ({(_stopwatch?.Elapsed.TotalMilliseconds ?? 0) / _frameCount:0.####} ms/{(results[1] - results[0]) * _gpuPeriod * 0.000001:0.####} ms)");
+                } else {
+                    Glfw.SetWindowTitle(_window, $"Volk Example - ({_frameCount} fps) - VSync ({_vsyncEnabled})");
+                }
 
                 _stopwatch = new Stopwatch();
                 _frameCount = 0;
@@ -858,8 +899,14 @@ namespace Volk.Example {
             Glfw.WindowHint(Hint.ClientApi, ClientApi.None);
             Glfw.WindowHint(Hint.Resizable, Constants.False);
 
-            _window = Glfw.CreateWindow(WindowWidth, WindowHeight, "Vulkan", Monitor.None, GLFW.Window.None);
+            _window = Glfw.CreateWindow(WindowWidth, WindowHeight, "Volk Example", Monitor.None, GLFW.Window.None);
             Console.WriteLine($"Init a {WindowWidth}x{WindowHeight} window");
+        }
+
+        private static void Assert(Result actual, Result expected, string message) {
+            if (actual != expected) {
+                throw new Exception($"Expected {expected} and got {actual} for: {message}");
+            }
         }
     }
 }
