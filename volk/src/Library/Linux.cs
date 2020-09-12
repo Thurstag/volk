@@ -13,7 +13,7 @@ namespace Volk.Library {
         private const string DllName = "libdl.so";
         public const int RTLD_LOCAL = 0;
         public const int RTLD_NOW = 0x00002;
-        public static readonly string[] VulkanDllNames = {"libvulkan.so.1", "libvulkan.so"};
+        public static readonly string[] VulkanDllNames = { "libvulkan.so.1", "libvulkan.so" };
 
         [DllImport(DllName)]
         public static extern IntPtr dlopen(string filename, int flags);

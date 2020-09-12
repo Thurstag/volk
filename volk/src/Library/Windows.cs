@@ -11,7 +11,7 @@ namespace Volk.Library {
     /// </summary>
     public static class Windows {
         private const string DllName = "kernel32.dll";
-        public static readonly string[] VulkanDllNames = {"vulkan-1.dll"};
+        public static readonly string[] VulkanDllNames = { "vulkan-1.dll" };
 
         [DllImport(DllName)]
         public static extern IntPtr LoadLibrary(string dllToLoad);

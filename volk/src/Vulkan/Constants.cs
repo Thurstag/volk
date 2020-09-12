@@ -2,6 +2,9 @@
 // Licensed under Apache License 2.0 or any later version
 // Refer to the LICENSE.md file included.
 
+// This file is generated automatically by generator
+
+
 namespace Volk.Vulkan {
     public class Constants {
         public const int MaxPhysicalDeviceNameSize = 256;
@@ -20,9 +23,9 @@ namespace Volk.Vulkan {
         public const int True = 1;
         public const int False = 0;
         public const ushort QueueFamilyIgnored = unchecked((ushort) (~0U));
-        public const ushort QueueFamilyExternal = unchecked((ushort) (~0U-1));
+        public const ushort QueueFamilyExternal = unchecked((ushort) (~0U - 1));
         public const ushort QueueFamilyExternalKhr = QueueFamilyExternal;
-        public const ushort QueueFamilyForeignExt = unchecked((ushort) (~0U-2));
+        public const ushort QueueFamilyForeignExt = unchecked((ushort) (~0U - 2));
         public const ushort SubpassExternal = unchecked((ushort) (~0U));
         public const int MaxDeviceGroupSize = 32;
         public const int MaxDeviceGroupSizeKhr = MaxDeviceGroupSize;

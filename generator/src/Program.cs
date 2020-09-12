@@ -13,28 +13,37 @@ using System.Xml.Linq;
 
 namespace Volk.Generator {
     // TODO: Fix AccelerationStructureInstanceKHR
-    // TODO: Replace KeyValuePair by tuple
 
-    static class Program {
+    internal static class Program {
         private const string VulkanSpecUrl = "https://raw.githubusercontent.com/KhronosGroup/Vulkan-Docs/master/xml/vk.xml";
 
-        static void Main(string[] args) {
+        private static void Main(string[] args) {
             // Download vulkan spec
-            XDocument doc = XDocument.Load(args.Length > 1 ? args[0] : VulkanSpecUrl);
+            XDocument doc = XDocument.Load(args.Length > 0 ? args[0] : VulkanSpecUrl);
             Console.WriteLine("Vulkan specification loaded");
+
+            // Check root
+            if (doc.Root is null) {
+                throw new Exception("XML root is null");
+            }
 
             // Extract commands
             var commands = new Dictionary<string, XElement>();
-            var commandAliases = new Dictionary<string, string>();
+            // Dictionary<string, string> commandAliases = new Dictionary<string, string>();
             foreach (var cmdGroup in doc.Root.Elements("commands")) {
                 foreach (var cmd in cmdGroup.Elements("command")) {
-                    XAttribute alias = cmd.Attribute("alias"), name = cmd.Attribute("name");
+                    if (cmd is null) {
+                        continue;
+                    }
+
+                    var alias = cmd.Attribute("alias");
+                    var name = cmd.Attribute("name");
 
                     if (alias != null && name != null) { // Alias
-                        commandAliases[name.Value] = alias.Value;
+                        // commandAliases.Add(name.Value, alias.Value);
                     } else {
                         var cmdName = cmd.Element("proto")?.Element("name")?.Value;
-                        if (cmdName == null) {
+                        if (cmdName is null) {
                             throw new Exception("Malformed command");
                         }
 
@@ -51,7 +60,8 @@ namespace Volk.Generator {
             var typeAliases = new Dictionary<string, LinkedList<string>>();
             foreach (var typeGroup in doc.Root.Elements("types")) {
                 foreach (var type in typeGroup.Elements("type")) {
-                    XAttribute alias = type.Attribute("alias"), name = type.Attribute("name");
+                    var alias = type.Attribute("alias");
+                    var name = type.Attribute("name");
 
                     if (alias != null && name != null) { // Alias
                         if (!typeAliases.ContainsKey(alias.Value)) {
@@ -63,7 +73,7 @@ namespace Volk.Generator {
                         types[name.Value] = type;
                     } else if (type.Elements().Any()) {
                         var typeName = type.Element("name")?.Value;
-                        if (typeName == null) {
+                        if (typeName is null) {
                             throw new Exception("Malformed type");
                         }
 
@@ -75,16 +85,18 @@ namespace Volk.Generator {
             Console.WriteLine("Types extracted");
 
             // Extract base types, enumerations
-            LinkedList<string> baseTypes = new LinkedList<string>(), handles = new LinkedList<string>(), usingAliases = new LinkedList<string>();
-            var constants = new LinkedList<XElement>();
-            Dictionary<string, LinkedList<XElement>> enumerations = new Dictionary<string, LinkedList<XElement>>();
-            Dictionary<string, KeyValuePair<KeyValuePair<string, XElement>, LinkedList<XElement>>> bitmasks =
-                new Dictionary<string, KeyValuePair<KeyValuePair<string, XElement>, LinkedList<XElement>>>();
-            Dictionary<string, XElement> structures = new Dictionary<string, XElement>(), unions = new Dictionary<string, XElement>();
-            ExtractTypeGroups(types, typeAliases, baseTypes, handles, enumerations, bitmasks, structures, usingAliases, unions); // TODO: Use tuple
+            var (
+                baseTypes,
+                handles,
+                enumerations,
+                bitmasks,
+                structures,
+                unions,
+                usingAliases
+                ) = ExtractTypeGroups(types, typeAliases);
 
             // Extract enumerations values
-            ExtractEnumerationsValues(doc.Root, enumerations, bitmasks, constants);
+            var constants = ExtractEnumerationsValues(doc.Root, enumerations, bitmasks);
 
             // Write commands in a file
             WriteCommands(commands, baseTypes, usingAliases, handles);
@@ -113,22 +125,23 @@ namespace Volk.Generator {
         /// </summary>
         /// <param name="commands">Vulkan commands</param>
         /// <param name="types">Vulkan types</param>
-        private static void WriteInstanceAndDevicesFunctionsLoader(Dictionary<string, XElement> commands, Dictionary<string, XElement> types) {
+        private static void
+            WriteInstanceAndDevicesFunctionsLoader(Dictionary<string, XElement> commands, IReadOnlyDictionary<string, XElement> types) {
             LinkedList<string> instanceCommands = new LinkedList<string>(), deviceCommands = new LinkedList<string>();
 
-            foreach (var command in commands) {
-                var firstParamType = command.Value.Element("param")?.Element("type")?.Value;
-                if (firstParamType != null && IsDescendantType(types, "VkDevice", firstParamType) && command.Key != "vkGetDeviceProcAddr") {
-                    deviceCommands.AddLast(command.Key);
+            foreach (var (name, command) in commands) {
+                var firstParamType = command.Element("param")?.Element("type")?.Value;
+                if (firstParamType != null && IsDescendantType(types, "VkDevice", firstParamType) && name != "vkGetDeviceProcAddr") {
+                    deviceCommands.AddLast(name);
                 } else if (firstParamType != null && IsDescendantType(types, "VkInstance", firstParamType) &&
-                           command.Key != "vkGetInstanceProcAddr") {
-                    instanceCommands.AddLast(command.Key);
+                           name != "vkGetInstanceProcAddr") {
+                    instanceCommands.AddLast(name);
                 }
             }
 
             string CommandLoader(string command, string loader, string param) => $@"
                 fixed (byte* funcName = &Encoding.UTF8.GetBytes(""{command}"")[0]) {{
-                    CommandTable.{TrimVKPrefix(command)} = FunctionPtrToDelegate<Commands.{TrimVKPrefix(command)}>(CommandTable.{loader}({param}, funcName));
+                    CommandTable.{TrimVkPrefix(command)} = FunctionPtrToDelegate<Commands.{TrimVkPrefix(command)}>(CommandTable.{loader}({param}, funcName));
                 }}";
 
             using var instanceFile = new StreamWriter("InstanceFunctions.cs", false);
@@ -147,7 +160,7 @@ namespace Volk {{
         /// <param name=""instance"">Vulkan instance</param>
         /// <exception cref=""Exception"">GetInstanceProcAddr isn't loaded</exception>
         public static void LoadInstance(IntPtr instance) {{
-            if (CommandTable.GetInstanceProcAddr == null) {{
+            if (CommandTable.GetInstanceProcAddr is null) {{
                 throw new Exception(""GetInstanceProcAddr isn't loaded"");
             }}
 
@@ -161,7 +174,7 @@ namespace Volk {{
 
             string DeviceCommandLoader(string command) => $@"
                 fixed (byte* funcName = &Encoding.UTF8.GetBytes(""{command}"")[0]) {{
-                    deviceTable.{TrimVKPrefix(command)} = FunctionPtrToDelegate<Commands.{TrimVKPrefix(command)}>(CommandTable.GetDeviceProcAddr(device, funcName));
+                    deviceTable.{TrimVkPrefix(command)} = FunctionPtrToDelegate<Commands.{TrimVkPrefix(command)}>(CommandTable.GetDeviceProcAddr(device, funcName));
                 }}";
 
             using var deviceFile = new StreamWriter("DeviceFunctions.cs", false);
@@ -180,7 +193,7 @@ namespace Volk {{
         /// <param name=""device"">Vulkan logical device</param>
         /// <exception cref=""Exception"">GetDeviceProcAddr isn't loaded</exception>
         public static void LoadDevice(IntPtr device) {{
-            if (CommandTable.GetDeviceProcAddr == null) {{
+            if (CommandTable.GetDeviceProcAddr is null) {{
                 throw new Exception(""GetDeviceProcAddr isn't loaded"");
             }}
 
@@ -196,7 +209,7 @@ namespace Volk {{
         /// <returns>Device commands table</returns>
         /// <exception cref=""Exception"">GetDeviceProcAddr isn't loaded</exception>
         public static DeviceCommandTable LoadDeviceTable(IntPtr device) {{
-            if (CommandTable.GetDeviceProcAddr == null) {{
+            if (CommandTable.GetDeviceProcAddr is null) {{
                 throw new Exception(""GetDeviceProcAddr isn't loaded"");
             }}
 
@@ -222,7 +235,7 @@ namespace Volk.Vulkan {{
 	/// Table of device commands
 	/// </summary>
     public class DeviceCommandTable {{
-{string.Join("\n\n", deviceCommands.Select(TrimVKPrefix).Select(DeclareCommandTableMember))}
+{string.Join("\n\n", deviceCommands.Select(TrimVkPrefix).Select(DeclareCommandTableMember))}
     }}
 }}"
             );
@@ -237,7 +250,7 @@ namespace Volk.Vulkan {{
         /// <param name="baseType">Base type</param>
         /// <param name="type">type</param>
         /// <returns>true if <paramref name="type"/> is a descendant of <paramref name="baseType"/>, false otherwise</returns>
-        private static bool IsDescendantType(Dictionary<string, XElement> types, string baseType, string type) {
+        private static bool IsDescendantType(IReadOnlyDictionary<string, XElement> types, string baseType, string type) {
             if (baseType == type) {
                 return true;
             }
@@ -266,7 +279,7 @@ namespace Volk.Vulkan {{
 	/// Global table of commands
 	/// </summary>
     public static class CommandTable {{
-{string.Join("\n\n", commands.Keys.Select(TrimVKPrefix).Select(DeclareMember))}
+{string.Join("\n\n", commands.Keys.Select(TrimVkPrefix).Select(DeclareMember))}
     }}
 }}"
             );
@@ -278,29 +291,36 @@ namespace Volk.Vulkan {{
         /// Write Constants file
         /// </summary>
         /// <param name="constants">Vulkan constants</param>
-        private static void WriteConstants(LinkedList<XElement> constants) {
+        private static void WriteConstants(IEnumerable<XElement> constants) {
             var types = new Dictionary<string, string>();
 
             string DeclareConstant(XElement constant) {
                 string type, value;
 
-                if (constant.Attribute("alias") != null) {
-                    type = types[constant.Attribute("alias").Value];
-                    value = TrimVKPrefix(ToTitleCase(constant.Attribute("alias").Value));
-                } else {
-                    type = DeclType(constant.Attribute("value").Value);
-                    value = constant.Attribute("value").Value;
+                var alias = constant.Attribute("alias");
+                var name = constant.Attribute("name");
 
-                    if (type == "ushort") {
-                        value = $"unchecked((ushort) {value})";
-                    } else if (type == "ulong") {
-                        value = value.Replace("ULL", "UL");
-                    }
-
-                    types.Add(constant.Attribute("name").Value, type);
+                if (name is null) {
+                    throw new Exception("name is null");
                 }
 
-                return $"        public const {type} {TrimVKPrefix(ToTitleCase(constant.Attribute("name").Value))} = {value};";
+                if (alias != null) {
+                    type = types[alias.Value];
+                    value = TrimVkPrefix(ToTitleCase(alias.Value));
+                } else {
+                    type = DeclNumType(constant.Attribute("value")?.Value ?? throw new Exception("value is null"));
+
+                    value = type switch {
+                        "ushort" => $"unchecked((ushort) {constant.Attribute("value")?.Value})",
+                        "ulong"  => constant.Attribute("value")?.Value?.Replace("ULL", "UL"),
+                        _        => constant.Attribute("value")?.Value
+                    } ?? throw new Exception("Failed to deduce value");
+
+                    types.Add(name.Value, type);
+                }
+
+                return
+                    $"        public const {type} {TrimVkPrefix(ToTitleCase(name.Value))} = {value};";
             }
 
             using var constantFile = new StreamWriter("Constants.cs", false);
@@ -321,7 +341,7 @@ namespace Volk.Vulkan {{
         /// </summary>
         /// <param name="value">Number</param>
         /// <returns>Type</returns>
-        private static string DeclType(string value) {
+        private static string DeclNumType(string value) {
             if (value.Last() == 'f') {
                 return "float";
             }
@@ -340,15 +360,15 @@ namespace Volk.Vulkan {{
         /// <param name="baseTypes">Base types</param>
         private static void WriteUnions(Dictionary<string, XElement> unions, LinkedList<string> baseTypes) {
             string DeclareUnionMember(string type, string name) {
-                bool @fixed = Regex.IsMatch(name, @"\[.*\]$");
+                var @fixed = Regex.IsMatch(name, @"\[.*\]$");
 
                 return $@"        [FieldOffset(0)] public {(IsUnsafe(type, @fixed) ? "unsafe " : "")}{(@fixed ? "fixed " : "")}{type} {name};";
             }
 
-            string DeclareUnion(string name, XElement content) {
+            string DeclareUnion(string name, XContainer content) {
                 return $@"
     [StructLayout(LayoutKind.Explicit)]
-    public struct {TrimVKPrefix(name)} {{
+    public struct {TrimVkPrefix(name)} {{
 {string.Join("\n", content.Elements("member").Select(member => DeducePrototype(member.Nodes())).Select(proto => DeclareUnionMember(proto.Item1, proto.Item2)))}
     }}";
             }
@@ -374,20 +394,28 @@ namespace Volk.Vulkan.Types {{
         /// <param name="type">Type</param>
         /// <param name="fixed">Type is fixed</param>
         /// <returns>true if type is unsafe, false otherwise</returns>
-        private static bool IsUnsafe(string type, bool @fixed) {
-            return @fixed || type.Contains('*');
-        }
+        private static bool IsUnsafe(string type, bool @fixed) => @fixed || type.Contains('*');
 
-        private static void WriteStructures(Dictionary<string, XElement> structures, Dictionary<string, XElement> types, LinkedList<string> baseTypes,
-            LinkedList<string> usingAliases,
-            LinkedList<string> handles, LinkedList<XElement> constants) {
+        /// <summary>
+        /// Write Structures file
+        /// </summary>
+        /// <param name="structures">Structures</param>
+        /// <param name="types">Types</param>
+        /// <param name="baseTypes">Base types</param>
+        /// <param name="usingAliases"></param>
+        /// <param name="handles">Handles</param>
+        /// <param name="constants">Constants</param>
+        private static void WriteStructures(Dictionary<string, XElement> structures, IReadOnlyDictionary<string, XElement> types,
+                                            IEnumerable<string> baseTypes,
+                                            IEnumerable<string> usingAliases,
+                                            IEnumerable<string> handles, LinkedList<XElement> constants) {
             var structureArray = new string[structures.Count];
 
-            int index = 0;
-            foreach (var structure in structures) {
+            var index = 0;
+            foreach (var (structName, structure) in structures) {
                 var members = new LinkedList<string>();
 
-                foreach (var member in structure.Value.Elements("member")) {
+                foreach (var member in structure.Elements("member")) {
                     var (type, name) = DeducePrototype(member.Nodes());
 
                     var arrayMatcher = Regex.Match(name, @"\[.*\]$");
@@ -400,30 +428,30 @@ namespace Volk.Vulkan.Types {{
                             name = name.Substring(0, arrayMatcher.Index);
                         } else {
                             var sizeStr = name.Substring(arrayMatcher.Index + 1, name.Length - 2 - arrayMatcher.Index);
-                            int size;
-                            if (int.TryParse(sizeStr, out size)) {
+                            if (int.TryParse(sizeStr, out var size)) {
                                 if (types.ContainsKey($"Vk{type}")) {
-                                    for (int i = 0; i < size; i++) {
+                                    for (var i = 0; i < size; i++) {
                                         members.AddLast($"\t\tpublic {type} {name.Substring(0, arrayMatcher.Index)}_{i};");
                                     }
 
                                     continue;
-                                } else {
-                                    type = $"fixed {type}";
                                 }
+
+                                type = $"fixed {type}";
                             } else {
                                 if (types.ContainsKey($"Vk{type}")) {
-                                    var realSize = int.Parse(constants.First(constant => constant.Attribute("name").Value == sizeStr)
-                                        .Attribute("value").Value);
-                                    for (int i = 0; i < realSize; i++) {
+                                    var realSize = int.Parse(constants.First(constant => constant.Attribute("name")?.Value == sizeStr)
+                                                                 .Attribute("value")?.Value ??
+                                                             throw new Exception($"Unable to find real size of {type}"));
+                                    for (var i = 0; i < realSize; i++) {
                                         members.AddLast($"\t\tpublic {type} {name.Substring(0, arrayMatcher.Index)}_{i};");
                                     }
 
                                     continue;
-                                } else {
-                                    type = $"fixed {type}";
-                                    name = $"{name.Substring(0, arrayMatcher.Index)}[Constants.{TrimVKPrefix(ToTitleCase(sizeStr))}]";
                                 }
+
+                                type = $"fixed {type}";
+                                name = $"{name.Substring(0, arrayMatcher.Index)}[Constants.{TrimVkPrefix(ToTitleCase(sizeStr))}]";
                             }
                         }
                     }
@@ -431,43 +459,51 @@ namespace Volk.Vulkan.Types {{
                     members.AddLast($"\t\tpublic unsafe {type} {name};");
                 }
 
-                structureArray[index++] = $"\tpublic struct {ToVolkType(structure.Key)} {{\n" +
+                structureArray[index++] = $"\tpublic struct {ToCSharpType(structName)} {{\n" +
                                           $"{string.Join("\n", members)}\n" +
                                           "\t}";
             }
 
             using var structureFile = new StreamWriter("Structures.cs", false);
-            structureFile.WriteLine(Copyright());
-            structureFile.WriteLine("using DotNetCross.NativeInts;\n" +
-                                    "using IntPtr = System.IntPtr;\n\n" +
-                                    $"{string.Join("\n", baseTypes)}\n\n" +
-                                    $"{string.Join("\n", handles)}\n\n" +
-                                    $"{string.Join("\n", usingAliases)}\n\n" +
-                                    "namespace Volk.Vulkan.Types {\n" +
-                                    string.Join("\n\n", structureArray) +
-                                    "\n}");
+            structureFile.WriteLine(
+                $@"{Copyright()}
+using DotNetCross.NativeInts;
+using IntPtr = System.IntPtr;
+
+{string.Join("\n", baseTypes)}
+
+{string.Join("\n", handles)}
+
+{string.Join("\n", usingAliases)}
+
+namespace Volk.Vulkan.Types {{
+{string.Join("\n\n", structureArray)}
+}}"
+            );
 
             Console.WriteLine("All structures were generated");
         }
 
+        // TODO: Doc
         private static void WriteEnumerations(Dictionary<string, LinkedList<XElement>> enumerations,
-            Dictionary<string, KeyValuePair<KeyValuePair<string, XElement>, LinkedList<XElement>>> bitmasks, LinkedList<string> baseTypes) {
+                                              IReadOnlyDictionary<string, ((string, XElement), LinkedList<XElement>)> bitmasks,
+                                              LinkedList<string> baseTypes) {
             var enumerationArray = new string[enumerations.Count];
             var bitmaskArray = new string[bitmasks.Count];
 
-            int index = 0;
-            foreach (var enumeration in enumerations.Where(pair => !bitmasks.ContainsKey(pair.Key))) {
-                enumerationArray[index++] = $"\tpublic enum {TrimVKPrefix(enumeration.Key)} {{\n" +
-                                            $"{string.Join(",\n", enumeration.Value.Select(DeduceEnumerationPrototype).Select(proto => $"\t\t{proto.Item1} = {proto.Item2}").Distinct())}\n" +
+            var index = 0;
+            foreach (var (name, enumeration) in enumerations.Where(pair => !bitmasks.ContainsKey(pair.Key))) {
+                enumerationArray[index++] = $"\tpublic enum {TrimVkPrefix(name)} {{\n" +
+                                            $"{string.Join(",\n", enumeration.Select(DeduceEnumerationPrototype).Select(proto => $"\t\t{proto.Item1} = {proto.Item2}").Distinct())}\n" +
                                             "\t}";
             }
 
             index = 0;
-            foreach (var bitmask in bitmasks) {
+            foreach (var (_, ((name, enumeration), values)) in bitmasks) {
                 bitmaskArray[index++] =
                     "\t[FlagsAttribute]\n" +
-                    $"\tpublic enum {TrimVKPrefix(bitmask.Value.Key.Key)} : {ToVolkType(bitmask.Value.Key.Value.Element("type").Value)} {{\n" +
-                    $"{string.Join(",\n", bitmask.Value.Value.Select(DeduceEnumerationPrototype).Select(proto => $"\t\t{proto.Item1} = {proto.Item2}").Distinct())}\n" +
+                    $"\tpublic enum {TrimVkPrefix(name)} : {ToCSharpType(enumeration.Element("type").Value)} {{\n" +
+                    $"{string.Join(",\n", values.Select(DeduceEnumerationPrototype).Select(proto => $"\t\t{proto.Item1} = {proto.Item2}").Distinct())}\n" +
                     "\t}";
             }
 
@@ -490,8 +526,11 @@ namespace Volk.Vulkan.Types {{
         }
 
         // TODO: Doc
-        private static void ExtractEnumerationsValues(XElement docRoot, Dictionary<string, LinkedList<XElement>> enumerations,
-            Dictionary<string, KeyValuePair<KeyValuePair<string, XElement>, LinkedList<XElement>>> bitmasks, LinkedList<XElement> constants) {
+        private static LinkedList<XElement> ExtractEnumerationsValues(XContainer docRoot,
+                                                                      IReadOnlyDictionary<string, LinkedList<XElement>> enumerations,
+                                                                      Dictionary<string, ((string, XElement), LinkedList<XElement>)> bitmasks) {
+            var constants = new LinkedList<XElement>();
+
             foreach (var enumerationValue in docRoot.Elements("enums")
                 .Where(value => value.Attribute("name") != null)) {
                 if (enumerations.ContainsKey(enumerationValue.Attribute("name").Value)) {
@@ -499,7 +538,7 @@ namespace Volk.Vulkan.Types {{
                 }
 
                 if (bitmasks.ContainsKey(enumerationValue.Attribute("name").Value)) {
-                    bitmasks[enumerationValue.Attribute("name").Value].Value.AddLastRange(enumerationValue.Elements("enum"));
+                    bitmasks[enumerationValue.Attribute("name").Value].Item2.AddLastRange(enumerationValue.Elements("enum"));
                 }
 
                 if (enumerationValue.Attribute("name").Value == "API Constants") {
@@ -516,7 +555,7 @@ namespace Volk.Vulkan.Types {{
                 }
 
                 if (bitmasks.ContainsKey(enumerationValue.Attribute("extends").Value)) {
-                    bitmasks[enumerationValue.Attribute("extends").Value].Value.AddLast(enumerationValue);
+                    bitmasks[enumerationValue.Attribute("extends").Value].Item2.AddLast(enumerationValue);
                 }
             }
 
@@ -530,39 +569,47 @@ namespace Volk.Vulkan.Types {{
                 }
 
                 if (bitmasks.ContainsKey(enumerationValue.Attribute("extends").Value)) {
-                    bitmasks[enumerationValue.Attribute("extends").Value].Value.AddLast(enumerationValue);
+                    bitmasks[enumerationValue.Attribute("extends").Value].Item2.AddLast(enumerationValue);
                 }
             }
+
+            return constants;
         }
 
         // TODO: Doc
-        private static void ExtractTypeGroups(Dictionary<string, XElement> types, Dictionary<string, LinkedList<string>> typeAliases,
-            LinkedList<string> baseTypes,
-            LinkedList<string> handles,
-            Dictionary<string, LinkedList<XElement>> enumerations,
-            Dictionary<string, KeyValuePair<KeyValuePair<string, XElement>, LinkedList<XElement>>> bitmasks,
-            Dictionary<string, XElement> structures,
-            LinkedList<string> usingAliases,
-            Dictionary<string, XElement> unions) {
-            foreach (var type in types
+        private static (LinkedList<string>, LinkedList<string>, Dictionary<string, LinkedList<XElement>>,
+            Dictionary<string, ((string, XElement), LinkedList<XElement>)>, Dictionary<string, XElement>, Dictionary<string, XElement>,
+            LinkedList<string>)
+            ExtractTypeGroups(Dictionary<string, XElement> types, IReadOnlyDictionary<string, LinkedList<string>> typeAliases) {
+            var bitmasks = new Dictionary<string, ((string, XElement), LinkedList<XElement>)>();
+            var enumerations = new Dictionary<string, LinkedList<XElement>>();
+            var structures = new Dictionary<string, XElement>();
+            var unions = new Dictionary<string, XElement>();
+            var usingAliases = new LinkedList<string>();
+            var baseTypes = new LinkedList<string>();
+            var handles = new LinkedList<string>();
+
+            foreach (var (typeName, type) in types
                 .Where(type => type.Value.Attribute("category") != null)) {
-                switch (type.Value.Attribute("category").Value) {
+                switch (type.Attribute("category")?.Value) {
                     case "basetype":
-                        if (type.Value.Element("type") != null) {
-                            baseTypes.AddLast($"using {ToVolkType(type.Key)} = {ToVolkAliasType(type.Value.Element("type").Value)};");
+                        var typeElement = type.Element("type");
+                        if (typeElement != null) {
+                            baseTypes.AddLast($"using {ToCSharpType(typeName)} = {ToVolkAliasType(typeElement.Value)};");
                         }
 
                         break;
 
                     case "handle":
-                        if (type.Value.Element("name") != null) {
-                            string name = type.Value.Element("name").Value;
-                            string volkName = ToVolkType(name);
+                        var nameElement = type.Element("name");
+                        if (nameElement != null) {
+                            string name = nameElement.Value;
+                            string volkName = ToCSharpType(name);
 
                             handles.AddLast($"using {volkName} = System.IntPtr;");
                             if (typeAliases.ContainsKey(name)) {
                                 foreach (var alias in typeAliases[name]) {
-                                    handles.AddLast($"using {ToVolkType(alias)} = System.IntPtr;");
+                                    handles.AddLast($"using {ToCSharpType(alias)} = System.IntPtr;");
                                 }
                             }
                         }
@@ -570,62 +617,59 @@ namespace Volk.Vulkan.Types {{
                         break;
 
                     case "enum":
-                        if (typeAliases.ContainsKey(type.Key)) {
-                            foreach (var alias in typeAliases[type.Key]) {
-                                usingAliases.AddLast($"using {ToVolkType(alias)} = Volk.Vulkan.Types.{ToVolkType(type.Key)};");
+                        if (typeAliases.ContainsKey(typeName)) {
+                            foreach (var alias in typeAliases[typeName]) {
+                                usingAliases.AddLast($"using {ToCSharpType(alias)} = Volk.Vulkan.Types.{ToCSharpType(typeName)};");
                             }
                         }
 
-                        enumerations.Add(type.Key, new LinkedList<XElement>());
+                        enumerations.Add(typeName, new LinkedList<XElement>());
                         break;
 
                     case "struct":
-                        structures.Add(type.Key, type.Value);
+                        structures.Add(typeName, type);
 
-                        if (typeAliases.ContainsKey(type.Key)) {
-                            foreach (var alias in typeAliases[type.Key]) {
-                                usingAliases.AddLast($"using {ToVolkType(alias)} = Volk.Vulkan.Types.{ToVolkType(type.Key)};");
+                        if (typeAliases.ContainsKey(typeName)) {
+                            foreach (var alias in typeAliases[typeName]) {
+                                usingAliases.AddLast($"using {ToCSharpType(alias)} = Volk.Vulkan.Types.{ToCSharpType(typeName)};");
                             }
                         }
 
                         break;
 
                     case "bitmask":
-                        if (type.Value.Element("type") == null) {
+                        if (type.Element("type") is null) {
                             throw new Exception("Based type is undefined");
                         }
 
-                        if (type.Value.Attribute("requires") == null) {
-                            bitmasks.Add(type.Key,
-                                new KeyValuePair<KeyValuePair<string, XElement>, LinkedList<XElement>>(type, new LinkedList<XElement>()));
-                        } else {
-                            bitmasks.Add(type.Value.Attribute("requires").Value,
-                                new KeyValuePair<KeyValuePair<string, XElement>, LinkedList<XElement>>(type, new LinkedList<XElement>()));
-                        }
+                        var requires = type.Attribute("requires");
+                        bitmasks.Add(requires is null ? typeName : requires.Value, ((typeName, type), new LinkedList<XElement>()));
 
                         break;
 
                     case "union":
-                        unions.Add(type.Key, type.Value);
+                        unions.Add(typeName, type);
                         break;
                 }
             }
+
+            return (baseTypes, handles, enumerations, bitmasks, structures, unions, usingAliases);
         }
 
         // TODO: Doc
-        private static void WriteCommands(Dictionary<string, XElement> commands, LinkedList<string> baseTypes, LinkedList<string> usingAliases,
-            LinkedList<string> handles) {
+        private static void WriteCommands(Dictionary<string, XElement> commands, IEnumerable<string> baseTypes, IEnumerable<string> usingAliases,
+                                          IEnumerable<string> handles) {
             var commandsArray = new string[commands.Count];
 
-            int index = 0;
-            foreach (var cmd in commands) {
-                var returnType = cmd.Value.Element("proto")?.Element("type");
-                if (returnType == null) {
-                    throw new Exception("No return type for command: " + cmd.Key);
+            var index = 0;
+            foreach (var (cmdName, command) in commands) {
+                var returnType = command.Element("proto")?.Element("type");
+                if (returnType is null) {
+                    throw new Exception("No return type for command: " + cmdName);
                 }
 
                 var parameters = new LinkedList<(string, string)>();
-                foreach (var parameter in cmd.Value.Elements("param")) {
+                foreach (var parameter in command.Elements("param")) {
                     var (type, name) = DeducePrototype(parameter.Nodes());
 
                     if (Regex.IsMatch(name, @"\[.*\]$")) {
@@ -637,7 +681,7 @@ namespace Volk.Vulkan.Types {{
                 }
 
                 commandsArray[index++] =
-                    $"{ToVolkType(returnType.Value)} {TrimVKPrefix(cmd.Key)}({string.Join(", ", parameters.Select(proto => $"{proto.Item1} {proto.Item2}"))})";
+                    $"{ToCSharpType(returnType.Value)} {TrimVkPrefix(cmdName)}({string.Join(", ", parameters.Select(proto => $"{proto.Item1} {proto.Item2}"))})";
             }
 
             using var commandsFile = new StreamWriter("Commands.cs", false);
@@ -656,18 +700,18 @@ namespace Volk.Vulkan.Types {{
             Console.WriteLine("All commands were generated");
         }
 
-        // TODO: Doc
-        private static string ToVolkType(string type) {
+        /// <summary>
+        /// Convert a C type into a C# type
+        /// </summary>
+        /// <param name="type">C type</param>
+        /// <returns>C# type</returns>
+        private static string ToCSharpType(string type) {
             if (type.EndsWith("*")) {
-                return ToVolkType(type.Substring(0, type.Length - 1)) + "*";
+                return ToCSharpType(type.Substring(0, type.Length - 1)) + "*";
             }
 
             if (type.StartsWith("Vk")) {
-                if (type.Contains("FlagBits")) {
-                    return type.Replace("FlagBits", "Flags").Substring(2);
-                }
-
-                return type.Substring(2);
+                return type.Contains("FlagBits") ? type.Replace("FlagBits", "Flags").Substring(2) : type.Substring(2);
             }
 
             if (type == "uint16_t") {
@@ -731,7 +775,11 @@ namespace Volk.Vulkan.Types {{
             return type;
         }
 
-        // TODO: Doc
+        /// <summary>
+        /// Convert a C parameter into C# parameter
+        /// </summary>
+        /// <param name="str">C parameter</param>
+        /// <returns>C# parameter</returns>
         private static string ToCSharpParameter(string str) {
             if (str == "event") {
                 return "@event";
@@ -740,6 +788,8 @@ namespace Volk.Vulkan.Types {{
             if (str == "object") {
                 return "@object";
             }
+
+            /* Rename pointer parameters */
 
             if (str.Length >= 2 && str.First() == 'p' && char.IsUpper(str[1])) {
                 return ToCSharpParameter($"{char.ToLower(str[1])}{str.Substring(2)}");
@@ -753,30 +803,34 @@ namespace Volk.Vulkan.Types {{
         }
 
         // TODO: Doc
-        private static string ToVolkAliasType(string type) {
-            if (type == "uint32_t") {
-                return "System.UInt32";
-            }
+        private static string ToVolkAliasType(string type) =>
+            type switch {
+                "uint32_t" => "System.UInt32",
+                "uint64_t" => "System.UInt64",
+                _          => type
+            };
 
-            if (type == "uint64_t") {
-                return "System.UInt64";
-            }
-
-            return type;
-        }
-
-        // TODO: Doc
-        public static void AddLastRange<T>(this LinkedList<T> source, IEnumerable<T> items) {
-            foreach (T item in items) {
+        /// <summary>
+        /// Add a range of items into a linked list
+        /// </summary>
+        /// <param name="source">Linked list</param>
+        /// <param name="items">Items to add</param>
+        /// <typeparam name="T">Item type</typeparam>
+        private static void AddLastRange<T>(this LinkedList<T> source, IEnumerable<T> items) {
+            foreach (var item in items) {
                 source.AddLast(item);
             }
         }
 
-        // TODO: Doc
-        public static string ToTitleCase(string str) { // TODO: Skip KHR and other acronyms
+        /// <summary>
+        /// Convert a string containing upper-case letters and underscores into a title case string without underscores
+        /// </summary>
+        /// <param name="str">String</param>
+        /// <returns>Transformed string</returns>
+        private static string ToTitleCase(string str) {
             var builder = new StringBuilder();
 
-            for (int i = 0; i < str.Length; i++) {
+            for (var i = 0; i < str.Length; i++) {
                 if (str[i] == '_') {
                     continue;
                 }
@@ -798,37 +852,46 @@ namespace Volk.Vulkan.Types {{
         /// <returns>A tuple with the name and the value</returns>
         /// <exception cref="Exception">Unable to deduce prototype</exception>
         private static (string, string) DeduceEnumerationPrototype(XElement element) {
-            string name = TrimVKPrefix(ToTitleCase(element.Attribute("name").Value));
-
-            if (element.Attribute("alias") != null) {
-                return (name, TrimVKPrefix(ToTitleCase(element.Attribute("alias").Value)));
+            var originalName = element.Attribute("name");
+            if (originalName is null) {
+                throw new Exception("original name is null");
             }
 
-            if (element.Attribute("bitpos") != null) {
-                return (name, $"1 << {TrimVKPrefix(element.Attribute("bitpos").Value)}");
+            string name = TrimVkPrefix(ToTitleCase(originalName.Value));
+
+            var alias = element.Attribute("alias");
+            if (alias != null) {
+                return (name, TrimVkPrefix(ToTitleCase(alias.Value)));
             }
 
-            if (element.Attribute("value") != null) {
-                return (name, element.Attribute("value").Value);
+            var bitpos = element.Attribute("bitpos");
+            if (bitpos != null) {
+                return (name, $"1 << {TrimVkPrefix(bitpos.Value)}");
             }
 
-            if (element.Attribute("offset") != null) {
-                int direction = element.Attribute("dir") != null && element.Attribute("dir").Value.First() == '-' ? -1 : 1;
-
-                string? extensionNumber = element.Attribute("extnumber") != null
-                    ? element.Attribute("extnumber").Value
-                    : element.Parent?.Parent?.Attribute("number")?.Value;
-                if (extensionNumber == null) {
-                    throw new Exception($"Undefined extension number for: {element}");
-                }
-
-                int value = direction * (1000000000 + (int.Parse(extensionNumber, CultureInfo.InvariantCulture.NumberFormat) - 1) * 1000 +
-                                         int.Parse(element.Attribute("offset").Value));
-
-                return (name, value.ToString());
+            var value = element.Attribute("value");
+            if (value != null) {
+                return (name, value.Value);
             }
 
-            throw new Exception($"Unsupported element: {element}");
+            var offset = element.Attribute("offset");
+            if (offset is null) {
+                throw new Exception($"Unsupported element: {element}");
+            }
+
+            var direction = element.Attribute("dir") != null && element.Attribute("dir")?.Value.First() == '-' ? -1 : 1;
+
+            var extensionNumber = element.Attribute("extnumber") != null
+                ? element.Attribute("extnumber")?.Value
+                : element.Parent?.Parent?.Attribute("number")?.Value;
+            if (extensionNumber is null) {
+                throw new Exception($"Undefined extension number for: {element}");
+            }
+
+            var result = direction * (1000000000 + (int.Parse(extensionNumber, CultureInfo.InvariantCulture.NumberFormat) - 1) * 1000 +
+                                      int.Parse(offset.Value));
+
+            return (name, result.ToString());
         }
 
         /// <summary>
@@ -836,9 +899,7 @@ namespace Volk.Vulkan.Types {{
         /// </summary>
         /// <param name="str">String</param>
         /// <returns>String without vk prefix</returns>
-        private static string TrimVKPrefix(string str) {
-            return str.StartsWith("Vk") || str.StartsWith("vk") ? str.Substring(2) : str;
-        }
+        private static string TrimVkPrefix(string str) => str.StartsWith("Vk") || str.StartsWith("vk") ? str.Substring(2) : str;
 
         /// <summary>
         /// Deduce prototype (type and name)
@@ -850,7 +911,7 @@ namespace Volk.Vulkan.Types {{
             var name = new StringBuilder();
             var type = new StringBuilder();
 
-            bool nameEncountered = false;
+            var nameEncountered = false;
             foreach (var node in nodes) {
                 if (node is XElement element) {
                     switch (element.Name.LocalName) {
@@ -897,17 +958,18 @@ namespace Volk.Vulkan.Types {{
                 throw new Exception("Unable to determine prototype");
             }
 
-            return (ToVolkType(type.ToString()), ToCSharpParameter(name.ToString()));
+            return (ToCSharpType(type.ToString()), ToCSharpParameter(name.ToString()));
         }
 
         /// <summary>
         /// Generate the copyright comment for volk files
         /// </summary>
         /// <returns>Copyright</returns>
-        private static string Copyright() {
-            return $"// Copyright 2020-{DateTime.Now.Year} Volk Project\n" +
-                   "// Licensed under Apache License 2.0 or any later version\n" +
-                   "// Refer to the LICENSE.md file included.\n";
-        }
+        private static string Copyright() =>
+            $"// Copyright 2020-{DateTime.Now.Year} Volk Project\n" +
+            "// Licensed under Apache License 2.0 or any later version\n" +
+            "// Refer to the LICENSE.md file included.\n\n" +
+            "// This file is generated automatically by generator\n" +
+            "\n";
     }
 }

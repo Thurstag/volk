@@ -2,8 +2,10 @@
 // Licensed under Apache License 2.0 or any later version
 // Refer to the LICENSE.md file included.
 
-using System.Runtime.InteropServices;
+// This file is generated automatically by generator
 
+
+using System.Runtime.InteropServices;
 using SampleMask = System.UInt32;
 using Bool32 = System.UInt32;
 using Flags = System.UInt32;
@@ -11,7 +13,6 @@ using DeviceSize = System.UInt64;
 using DeviceAddress = System.UInt64;
 
 namespace Volk.Vulkan.Types {
-
     [StructLayout(LayoutKind.Explicit)]
     public struct ClearColorValue {
         [FieldOffset(0)] public unsafe fixed float float32[4];

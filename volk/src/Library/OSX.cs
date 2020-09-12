@@ -13,11 +13,11 @@ namespace Volk.Library {
         private const string DllName = "libdl.dylib";
         public const int RTLD_LOCAL = 0;
         public const int RTLD_NOW = 0x00002;
-        public static readonly string[] VulkanDllNames = {"libvulkan.dylib", "libvulkan.1.dylib", "libMoltenVK.dylib"};
-        
+        public static readonly string[] VulkanDllNames = { "libvulkan.dylib", "libvulkan.1.dylib", "libMoltenVK.dylib" };
+
         [DllImport(DllName)]
         public static extern IntPtr dlopen(String fileName, int flags);
-        
+
         [DllImport(DllName)]
         public static extern IntPtr dlsym(IntPtr handle, string symbol);
 

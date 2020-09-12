@@ -2,10 +2,13 @@
 // Licensed under Apache License 2.0 or any later version
 // Refer to the LICENSE.md file included.
 
+// This file is generated automatically by generator
+
+
 namespace Volk.Vulkan {
     /// <summary>
-	/// Table of device commands
-	/// </summary>
+    /// Table of device commands
+    /// </summary>
     public class DeviceCommandTable {
         public Commands.DestroyDevice? DestroyDevice;
 

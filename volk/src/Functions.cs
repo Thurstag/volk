@@ -31,15 +31,15 @@ namespace Volk {
             // Load getInstanceProcAddr function
             if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)) {
                 getInstanceProcAddrPtr = LoadGetInstanceProcAddr(Windows.VulkanDllNames, Windows.LoadLibrary, ptr => Windows.FreeLibrary(ptr),
-                    Windows.GetProcAddress);
+                                                                 Windows.GetProcAddress);
             } else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) {
                 getInstanceProcAddrPtr = LoadGetInstanceProcAddr(Linux.VulkanDllNames, name => Linux.dlopen(name, Linux.RTLD_LOCAL | Linux.RTLD_NOW),
-                    ptr => Linux.dlclose(ptr),
-                    Linux.dlsym);
+                                                                 ptr => Linux.dlclose(ptr),
+                                                                 Linux.dlsym);
             } else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) {
                 getInstanceProcAddrPtr =
                     LoadGetInstanceProcAddr(OSX.VulkanDllNames, name => OSX.dlopen(name, OSX.RTLD_LOCAL | OSX.RTLD_NOW), ptr => OSX.dlclose(ptr),
-                        OSX.dlsym);
+                                            OSX.dlsym);
             } else {
                 throw new Exception($"Unsupported operation system: {Environment.OSVersion.Platform}");
             }
@@ -109,7 +109,7 @@ namespace Volk {
         /// <returns>Function pointer</returns>
         /// <exception cref="Exception">Failed to load any of the given libraries</exception>
         private static IntPtr LoadGetInstanceProcAddr(string[] libraries, LibraryLoader libLoader, LibraryDeleter deleter,
-            FunctionLoader funcLoader) {
+                                                      FunctionLoader funcLoader) {
             // Load dll
             var library = TryToLoadLibrary(libLoader, libraries);
             if (library == IntPtr.Zero) {

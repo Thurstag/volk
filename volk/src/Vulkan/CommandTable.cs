@@ -2,11 +2,13 @@
 // Licensed under Apache License 2.0 or any later version
 // Refer to the LICENSE.md file included.
 
-namespace Volk.Vulkan {
+// This file is generated automatically by generator
 
-	/// <summary>
-	/// Global table of commands
-	/// </summary>
+
+namespace Volk.Vulkan {
+    /// <summary>
+    /// Global table of commands
+    /// </summary>
     public static class CommandTable {
         public static Commands.CreateInstance? CreateInstance;
 
@@ -692,7 +694,8 @@ namespace Volk.Vulkan {
 
         public static Commands.ReleaseFullScreenExclusiveModeEXT? ReleaseFullScreenExclusiveModeEXT;
 
-        public static Commands.EnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR? EnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR;
+        public static Commands.EnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR?
+            EnumeratePhysicalDeviceQueueFamilyPerformanceQueryCountersKHR;
 
         public static Commands.GetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR? GetPhysicalDeviceQueueFamilyPerformanceQueryPassesKHR;
 
@@ -708,7 +711,8 @@ namespace Volk.Vulkan {
 
         public static Commands.CreateHeadlessSurfaceEXT? CreateHeadlessSurfaceEXT;
 
-        public static Commands.GetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV? GetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV;
+        public static Commands.GetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV?
+            GetPhysicalDeviceSupportedFramebufferMixedSamplesCombinationsNV;
 
         public static Commands.InitializePerformanceApiINTEL? InitializePerformanceApiINTEL;
 
