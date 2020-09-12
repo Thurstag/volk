@@ -4789,10 +4789,8 @@ namespace Volk.Vulkan.Types {
 
     public struct AccelerationStructureInstanceKHR {
         public unsafe TransformMatrixKHR transform;
-        public unsafe uint instanceCustomIndex;
-        public unsafe uint mask;
-        public unsafe uint instanceShaderBindingTableRecordOffset;
-        public unsafe GeometryInstanceFlagsKHR flags;
+        public unsafe uint instanceCustomIndexAndMask;
+        public unsafe uint instanceShaderBindingTableRecordOffsetAndFlags;
         public unsafe ulong accelerationStructureReference;
     }
 
