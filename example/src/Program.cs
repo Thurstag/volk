@@ -804,6 +804,10 @@ namespace Volk.Example {
 
                 _instance = instance;
             }
+
+            uint version;
+            Assert(CommandTable.EnumerateInstanceVersion(&version), Result.Success, "Retrieve instance version");
+            Console.WriteLine($@"Instance loaded (version: {Utilities.VersionToString(version)})");
         }
 
         private static void MainLoop() {
@@ -873,7 +877,8 @@ namespace Volk.Example {
                     if (_extraStatsEnabled) {
                         var results = new ulong[2];
                         fixed (void* ptr = results) {
-                            Assert(CommandTable.GetQueryPoolResults(_device, _timestampQueryPool, (uint) (_currentFrame * 2), 2, 2 * sizeof(ulong), ptr, sizeof(ulong),
+                            Assert(CommandTable.GetQueryPoolResults(_device, _timestampQueryPool, (uint) (_currentFrame * 2), 2, 2 * sizeof(ulong),
+                                                                    ptr, sizeof(ulong),
                                                                     QueryResultFlags.QueryResult64Bit | QueryResultFlags.QueryResultWaitBit),
                                    Result.Success, "Query pool results gathering");
                         }
@@ -891,7 +896,7 @@ namespace Volk.Example {
                 _frameCount = 0;
                 _stopwatch.Start();
             }
-            
+
             _currentFrame = (_currentFrame + 1) % _swapChainImages.Length;
             _frameCount += 1;
         }
