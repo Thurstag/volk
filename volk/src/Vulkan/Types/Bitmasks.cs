@@ -5,7 +5,7 @@
 // This file is generated automatically by generator
 
 
-using FlagsAttribute = System.FlagsAttribute;
+using System;
 using SampleMask = System.UInt32;
 using Bool32 = System.UInt32;
 using Flags = System.UInt32;

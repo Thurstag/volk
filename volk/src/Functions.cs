@@ -47,27 +47,27 @@ namespace Volk {
             // Check getInstanceProcAddr
             CommandTable.GetInstanceProcAddr = FunctionPtrToDelegate<Commands.GetInstanceProcAddr>(getInstanceProcAddrPtr);
             if (CommandTable.GetInstanceProcAddr == null) {
-                throw new Exception($"Failed to get {Volk.Library.Vulkan.GetInstanceProcAddrFuncName} function");
+                throw new Exception($"Failed to get {Library.Vulkan.GetInstanceProcAddrFuncName} function");
             }
 
             // Load functions
             unsafe {
-                fixed (byte* funcName = &Encoding.UTF8.GetBytes(Volk.Library.Vulkan.CreateInstanceFuncName)[0]) {
+                fixed (byte* funcName = &Encoding.UTF8.GetBytes(Library.Vulkan.CreateInstanceFuncName)[0]) {
                     CommandTable.CreateInstance =
                         FunctionPtrToDelegate<Commands.CreateInstance>(CommandTable.GetInstanceProcAddr(IntPtr.Zero, funcName));
                 }
 
-                fixed (byte* funcName = &Encoding.UTF8.GetBytes(Volk.Library.Vulkan.EnumerateInstanceExtensionPropertiesFuncName)[0]) {
+                fixed (byte* funcName = &Encoding.UTF8.GetBytes(Library.Vulkan.EnumerateInstanceExtensionPropertiesFuncName)[0]) {
                     CommandTable.EnumerateInstanceExtensionProperties =
                         FunctionPtrToDelegate<Commands.EnumerateInstanceExtensionProperties>(CommandTable.GetInstanceProcAddr(IntPtr.Zero, funcName));
                 }
 
-                fixed (byte* funcName = &Encoding.UTF8.GetBytes(Volk.Library.Vulkan.EnumerateInstanceLayerPropertiesFuncName)[0]) {
+                fixed (byte* funcName = &Encoding.UTF8.GetBytes(Library.Vulkan.EnumerateInstanceLayerPropertiesFuncName)[0]) {
                     CommandTable.EnumerateInstanceLayerProperties =
                         FunctionPtrToDelegate<Commands.EnumerateInstanceLayerProperties>(CommandTable.GetInstanceProcAddr(IntPtr.Zero, funcName));
                 }
 
-                fixed (byte* funcName = &Encoding.UTF8.GetBytes(Volk.Library.Vulkan.EnumerateInstanceVersionFuncName)[0]) {
+                fixed (byte* funcName = &Encoding.UTF8.GetBytes(Library.Vulkan.EnumerateInstanceVersionFuncName)[0]) {
                     CommandTable.EnumerateInstanceVersion =
                         FunctionPtrToDelegate<Commands.EnumerateInstanceVersion>(CommandTable.GetInstanceProcAddr(IntPtr.Zero, funcName));
                 }
@@ -120,7 +120,7 @@ namespace Volk {
             _library = new LibraryHandle(library, deleter);
 
             // Load vkGetInstanceProcAddr function
-            return funcLoader(library, Volk.Library.Vulkan.GetInstanceProcAddrFuncName);
+            return funcLoader(library, Library.Vulkan.GetInstanceProcAddrFuncName);
         }
 
         /// <summary>

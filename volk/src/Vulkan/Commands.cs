@@ -5,9 +5,8 @@
 // This file is generated automatically by generator
 
 
-using IntPtr = System.IntPtr;
-using Volk.Vulkan.Types;
 using DotNetCross.NativeInts;
+using Volk.Vulkan.Types;
 using SampleMask = System.UInt32;
 using Bool32 = System.UInt32;
 using Flags = System.UInt32;
@@ -216,9 +215,9 @@ namespace Volk.Vulkan {
 
         public unsafe delegate Result EnumeratePhysicalDevices(Instance instance, uint* physicalDeviceCount, PhysicalDevice* physicalDevices);
 
-        public unsafe delegate IntPtr GetDeviceProcAddr(Device device, byte* name);
+        public unsafe delegate Instance GetDeviceProcAddr(Device device, byte* name);
 
-        public unsafe delegate IntPtr GetInstanceProcAddr(Instance instance, byte* name);
+        public unsafe delegate Instance GetInstanceProcAddr(Instance instance, byte* name);
 
         public unsafe delegate void GetPhysicalDeviceProperties(PhysicalDevice physicalDevice, PhysicalDeviceProperties* properties);
 
