@@ -6,7 +6,6 @@
 
 
 using DotNetCross.NativeInts;
-using IntPtr = System.IntPtr;
 using SampleMask = System.UInt32;
 using Bool32 = System.UInt32;
 using Flags = System.UInt32;
@@ -303,11 +302,11 @@ namespace Volk.Vulkan.Types {
 
     public struct AllocationCallbacks {
         public unsafe void* userData;
-        public unsafe IntPtr pfnAllocation;
-        public unsafe IntPtr pfnReallocation;
-        public unsafe IntPtr pfnFree;
-        public unsafe IntPtr pfnInternalAllocation;
-        public unsafe IntPtr pfnInternalFree;
+        public unsafe Instance pfnAllocation;
+        public unsafe Instance pfnReallocation;
+        public unsafe Instance pfnFree;
+        public unsafe Instance pfnInternalAllocation;
+        public unsafe Instance pfnInternalFree;
     }
 
     public struct DeviceQueueCreateInfo {
@@ -1517,7 +1516,7 @@ namespace Volk.Vulkan.Types {
         public unsafe StructureType sType;
         public unsafe void* next;
         public unsafe DebugReportFlagsEXT flags;
-        public unsafe IntPtr pfnCallback;
+        public unsafe Instance pfnCallback;
         public unsafe void* userData;
     }
 
@@ -3039,7 +3038,7 @@ namespace Volk.Vulkan.Types {
         public unsafe DebugUtilsMessengerCreateFlagsEXT flags;
         public unsafe DebugUtilsMessageSeverityFlagsEXT messageSeverity;
         public unsafe DebugUtilsMessageTypeFlagsEXT messageType;
-        public unsafe IntPtr pfnUserCallback;
+        public unsafe Instance pfnUserCallback;
         public unsafe void* userData;
     }
 
