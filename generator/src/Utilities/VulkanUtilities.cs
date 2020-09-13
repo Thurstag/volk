@@ -11,11 +11,11 @@ using System.Xml.Linq;
 
 namespace Volk.Generator.Utilities {
     /// <summary>
-    /// A utility class for vulkan conversion
+    ///     A utility class for vulkan conversion
     /// </summary>
     public static class VulkanUtilities {
         /// <summary>
-        /// Convert a C type into a C# type
+        ///     Convert a C type into a C# type
         /// </summary>
         /// <param name="type">C type</param>
         /// <returns>C# type</returns>
@@ -92,14 +92,14 @@ namespace Volk.Generator.Utilities {
         }
 
         /// <summary>
-        /// Remove "vk" prefix in a string if presents
+        ///     Remove "vk" prefix in a string if presents
         /// </summary>
         /// <param name="str">String</param>
         /// <returns>String without vk prefix</returns>
         public static string TrimVkPrefix(string str) => str.StartsWith("Vk") || str.StartsWith("vk") ? str.Substring(2) : str;
 
         /// <summary>
-        /// Deduce prototype (type and name)
+        ///     Deduce prototype (type and name)
         /// </summary>
         /// <param name="nodes">List of nodes</param>
         /// <returns>A tuple with the type and the name</returns>
@@ -159,7 +159,7 @@ namespace Volk.Generator.Utilities {
         }
 
         /// <summary>
-        /// Convert a C parameter into C# parameter
+        ///     Convert a C parameter into C# parameter
         /// </summary>
         /// <param name="str">C parameter</param>
         /// <returns>C# parameter</returns>

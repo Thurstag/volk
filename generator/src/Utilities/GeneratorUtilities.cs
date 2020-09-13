@@ -9,22 +9,23 @@ using System.Text;
 
 namespace Volk.Generator.Utilities {
     /// <summary>
-    /// A utility class for generator
+    ///     A utility class for generator
     /// </summary>
     public static class GeneratorUtilities {
         /// <summary>
-        /// Generate the copyright comment for volk files
+        ///     Generate the copyright comment for volk files
         /// </summary>
         /// <returns>Copyright</returns>
-        public static string Copyright() =>
-            $"// Copyright 2020-{DateTime.Now.Year} Volk Project\n" +
-            "// Licensed under Apache License 2.0 or any later version\n" +
-            "// Refer to the LICENSE.md file included.\n\n" +
-            "// This file is generated automatically by generator\n" +
-            "\n";
+        public static string Copyright() {
+            return $"// Copyright 2020-{DateTime.Now.Year} Volk Project\n" +
+                   "// Licensed under Apache License 2.0 or any later version\n" +
+                   "// Refer to the LICENSE.md file included.\n\n" +
+                   "// This file is generated automatically by generator\n" +
+                   "\n";
+        }
 
         /// <summary>
-        /// Convert a string containing upper-case letters and underscores into a title case string without underscores
+        ///     Convert a string containing upper-case letters and underscores into a title case string without underscores
         /// </summary>
         /// <param name="str">String</param>
         /// <returns>Transformed string</returns>
@@ -47,7 +48,7 @@ namespace Volk.Generator.Utilities {
         }
 
         /// <summary>
-        /// Filter non null elements
+        ///     Filter non null elements
         /// </summary>
         /// <param name="source">Source</param>
         /// <typeparam name="T">Element type</typeparam>
@@ -55,7 +56,7 @@ namespace Volk.Generator.Utilities {
         public static IEnumerable<T> NonNull<T>(this IEnumerable<T?> source) where T : struct => source.OfType<T>();
 
         /// <summary>
-        /// Add a range of items into a linked list
+        ///     Add a range of items into a linked list
         /// </summary>
         /// <param name="source">Linked list</param>
         /// <param name="items">Items to add</param>

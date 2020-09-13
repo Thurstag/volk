@@ -13,11 +13,11 @@ using static Volk.Generator.Utilities.VulkanUtilities;
 
 namespace Volk.Generator.Writers {
     /// <summary>
-    /// Writer for vulkan enumerations
+    ///     Writer for vulkan enumerations
     /// </summary>
     public static class EnumerationsWriter {
         /// <summary>
-        /// Write enumerations and bitmasks in files
+        ///     Write enumerations and bitmasks in files
         /// </summary>
         /// <param name="enumerations">Enumerations</param>
         /// <param name="bitmasks">Bitmasks</param>
@@ -70,7 +70,7 @@ namespace Volk.Vulkan.Types {{
         }
 
         /// <summary>
-        /// Deduce enumeration value prototype (name and value)
+        ///     Deduce enumeration value prototype (name and value)
         /// </summary>
         /// <param name="element">Element</param>
         /// <returns>A tuple with the name and the value or null</returns>

@@ -10,19 +10,15 @@ using Volk.Vulkan;
 
 namespace Volk {
     /// <summary>
-    /// Volk functions
+    ///     Volk functions
     /// </summary>
     public static partial class Functions {
-        private static LibraryHandle? _library;
-
-        private delegate IntPtr LibraryLoader(string name);
-
         public delegate void LibraryDeleter(IntPtr library);
 
-        private delegate IntPtr FunctionLoader(IntPtr library, string name);
+        private static LibraryHandle? _library;
 
         /// <summary>
-        /// Initialize library by loading Vulkan loader, call this function before creating the Vulkan instance.
+        ///     Initialize library by loading Vulkan loader, call this function before creating the Vulkan instance.
         /// </summary>
         /// <exception cref="Exception">Failed to load vkGetInstanceProcAddr function</exception>
         public static void Initialize() {
@@ -75,18 +71,18 @@ namespace Volk {
         }
 
         /// <summary>
-        /// Free library previously loaded by <see cref="Initialize"/>
+        ///     Free library previously loaded by <see cref="Initialize" />
         /// </summary>
         public static void Destroy() {
             _library = null;
         }
 
         /// <summary>
-        /// Try to load a library
+        ///     Try to load a library
         /// </summary>
         /// <param name="loader">Function to load a library</param>
         /// <param name="libraries">List of libraries</param>
-        /// <returns>Library pointer or <see cref="IntPtr.Zero"/></returns>
+        /// <returns>Library pointer or <see cref="IntPtr.Zero" /></returns>
         private static IntPtr TryToLoadLibrary(LibraryLoader loader, string[] libraries) {
             foreach (var library in libraries) {
                 var lib = loader(library);
@@ -100,7 +96,7 @@ namespace Volk {
         }
 
         /// <summary>
-        /// Load "vkGetInstanceProcAddr" function pointer
+        ///     Load "vkGetInstanceProcAddr" function pointer
         /// </summary>
         /// <param name="libraries">List of libraries</param>
         /// <param name="libLoader">Function to load a library</param>
@@ -124,11 +120,11 @@ namespace Volk {
         }
 
         /// <summary>
-        /// Convert a function pointer into a delegate
+        ///     Convert a function pointer into a delegate
         /// </summary>
         /// <param name="function">Function pointer</param>
         /// <typeparam name="T">Delegate type</typeparam>
-        /// <returns>Delegate if <paramref name="function"/> is a valid pointer or null otherwise</returns>
+        /// <returns>Delegate if <paramref name="function" /> is a valid pointer or null otherwise</returns>
         private static T? FunctionPtrToDelegate<T>(IntPtr? function) where T : Delegate {
             if (function == null || function == IntPtr.Zero) {
                 return null;
@@ -136,5 +132,9 @@ namespace Volk {
 
             return Marshal.GetDelegateForFunctionPointer<T>(function.Value);
         }
+
+        private delegate IntPtr LibraryLoader(string name);
+
+        private delegate IntPtr FunctionLoader(IntPtr library, string name);
     }
 }

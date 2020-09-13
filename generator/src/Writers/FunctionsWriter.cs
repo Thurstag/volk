@@ -12,11 +12,11 @@ using static Volk.Generator.Utilities.VulkanUtilities;
 
 namespace Volk.Generator.Writers {
     /// <summary>
-    /// Writer for vulkan functions and loaders
+    ///     Writer for vulkan functions and loaders
     /// </summary>
     public static class FunctionsWriter {
         /// <summary>
-        /// Write InstanceFunctions, DeviceFunctions, DeviceCommandTable files
+        ///     Write InstanceFunctions, DeviceFunctions, DeviceCommandTable files
         /// </summary>
         /// <param name="commands">Vulkan commands</param>
         /// <param name="types">Vulkan types</param>
@@ -138,12 +138,12 @@ namespace Volk.Vulkan {{
         }
 
         /// <summary>
-        /// Check if a given type is a descendant of another type
+        ///     Check if a given type is a descendant of another type
         /// </summary>
         /// <param name="types">Vulkan types</param>
         /// <param name="baseType">Base type</param>
         /// <param name="type">type</param>
-        /// <returns>true if <paramref name="type"/> is a descendant of <paramref name="baseType"/>, false otherwise</returns>
+        /// <returns>true if <paramref name="type" /> is a descendant of <paramref name="baseType" />, false otherwise</returns>
         private static bool IsDescendantType(IReadOnlyDictionary<string, XElement> types, string baseType, string type) {
             if (baseType == type) {
                 return true;

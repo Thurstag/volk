@@ -12,7 +12,7 @@ using Volk.Vulkan;
 namespace Volk {
     public static partial class Functions {
         /// <summary>
-        /// Load instance commands into <see cref="CommandTable"/>
+        ///     Load instance commands into <see cref="CommandTable" />
         /// </summary>
         /// <param name="instance">Vulkan instance</param>
         /// <exception cref="Exception">GetInstanceProcAddr isn't loaded</exception>

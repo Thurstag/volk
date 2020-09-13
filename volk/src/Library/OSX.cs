@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace Volk.Library {
     /// <summary>
-    /// Set of functions to manipulate macOS libraries
+    ///     Set of functions to manipulate macOS libraries
     /// </summary>
     public class OSX {
         private const string DllName = "libdl.dylib";
@@ -16,7 +16,7 @@ namespace Volk.Library {
         public static readonly string[] VulkanDllNames = { "libvulkan.dylib", "libvulkan.1.dylib", "libMoltenVK.dylib" };
 
         [DllImport(DllName)]
-        public static extern IntPtr dlopen(String fileName, int flags);
+        public static extern IntPtr dlopen(string fileName, int flags);
 
         [DllImport(DllName)]
         public static extern IntPtr dlsym(IntPtr handle, string symbol);

@@ -12,11 +12,11 @@ using static Volk.Generator.Utilities.VulkanUtilities;
 
 namespace Volk.Generator.Writers {
     /// <summary>
-    /// Writer for vulkan constants
+    ///     Writer for vulkan constants
     /// </summary>
     public static class ConstantsWriter {
         /// <summary>
-        /// Write Constants file
+        ///     Write Constants file
         /// </summary>
         /// <param name="constants">Vulkan constants</param>
         public static void Write(IEnumerable<XElement> constants) {
@@ -65,7 +65,7 @@ namespace Volk.Vulkan {{
         }
 
         /// <summary>
-        /// Deduce type of a number
+        ///     Deduce type of a number
         /// </summary>
         /// <param name="value">Number</param>
         /// <returns>Type</returns>

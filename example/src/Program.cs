@@ -12,12 +12,12 @@ using DotNetCross.NativeInts;
 using GLFW;
 using Volk.Vulkan;
 using Volk.Vulkan.Types;
-using Constants = GLFW.Constants;
+using Constants = Volk.Vulkan.Constants;
 using Exception = System.Exception;
 
 namespace Volk.Example {
     /// <summary>
-    /// Entry point
+    ///     Entry point
     /// </summary>
     internal static class Program {
         private const int WindowWidth = 800;
@@ -57,21 +57,6 @@ namespace Volk.Example {
         private static int _currentFrame;
         private static ulong _frameCount;
         private static Stopwatch _stopwatch;
-
-        private struct QueueFamilyIndices {
-            public uint? GraphicsFamily;
-            public uint? PresentFamily;
-
-            public bool IsComplete() {
-                return GraphicsFamily != null && PresentFamily != null;
-            }
-        }
-
-        private struct SwapChainSupportDetails {
-            public SurfaceCapabilitiesKHR Capabilities;
-            public SurfaceFormatKHR[] Formats;
-            public PresentModeKHR[] PresentModes;
-        }
 
         private static void Main(string[] args) {
             // Initialize volk
@@ -265,7 +250,7 @@ namespace Volk.Example {
                 queueFamilyIndex = queueFamilyIndices.GraphicsFamily.Value
             };
 
-            IntPtr commandPool = new IntPtr();
+            var commandPool = new IntPtr();
             Assert(CommandTable.CreateCommandPool(_device, &poolInfo, (AllocationCallbacks*) IntPtr.Zero, &commandPool), Result.Success,
                    "Command pool creation");
 
@@ -275,7 +260,7 @@ namespace Volk.Example {
         private static unsafe void CreateFramebuffers() {
             _swapChainFramebuffers = new IntPtr[_swapChainImageViews.Length];
 
-            for (int i = 0; i < _swapChainFramebuffers.Length; i++) {
+            for (var i = 0; i < _swapChainFramebuffers.Length; i++) {
                 var framebufferInfo = new FramebufferCreateInfo {
                     sType = StructureType.StructureTypeFramebufferCreateInfo,
                     renderPass = _renderPass,
@@ -342,7 +327,7 @@ namespace Volk.Example {
             var inputAssembly = new PipelineInputAssemblyStateCreateInfo {
                 sType = StructureType.StructureTypePipelineInputAssemblyStateCreateInfo,
                 topology = PrimitiveTopology.PrimitiveTopologyTriangleList,
-                primitiveRestartEnable = Vulkan.Constants.False
+                primitiveRestartEnable = Constants.False
             };
 
             var viewport = new Viewport {
@@ -372,30 +357,30 @@ namespace Volk.Example {
 
             var rasterizer = new PipelineRasterizationStateCreateInfo {
                 sType = StructureType.StructureTypePipelineRasterizationStateCreateInfo,
-                depthClampEnable = Vulkan.Constants.False,
-                rasterizerDiscardEnable = Vulkan.Constants.False,
+                depthClampEnable = Constants.False,
+                rasterizerDiscardEnable = Constants.False,
                 polygonMode = PolygonMode.PolygonModeFill,
                 lineWidth = 1.0f,
                 cullMode = CullModeFlags.CullModeBackBit,
                 frontFace = FrontFace.FrontFaceClockwise,
-                depthBiasEnable = Vulkan.Constants.False
+                depthBiasEnable = Constants.False
             };
 
             var multisampling = new PipelineMultisampleStateCreateInfo {
                 sType = StructureType.StructureTypePipelineMultisampleStateCreateInfo,
-                sampleShadingEnable = Vulkan.Constants.False,
+                sampleShadingEnable = Constants.False,
                 rasterizationSamples = SampleCountFlags.SampleCount1Bit
             };
 
             var colorBlendAttachment = new PipelineColorBlendAttachmentState {
                 colorWriteMask = ColorComponentFlags.ColorComponentRBit | ColorComponentFlags.ColorComponentGBit |
                                  ColorComponentFlags.ColorComponentBBit | ColorComponentFlags.ColorComponentABit,
-                blendEnable = Vulkan.Constants.False
+                blendEnable = Constants.False
             };
 
             var colorBlending = new PipelineColorBlendStateCreateInfo {
                 sType = StructureType.StructureTypePipelineColorBlendStateCreateInfo,
-                logicOpEnable = Vulkan.Constants.False,
+                logicOpEnable = Constants.False,
                 logicOp = LogicOp.LogicOpCopy,
                 attachmentCount = 1,
                 attachments = &colorBlendAttachment
@@ -470,7 +455,7 @@ namespace Volk.Example {
             };
 
             var dependency = new SubpassDependency {
-                srcSubpass = Vulkan.Constants.SubpassExternal,
+                srcSubpass = Constants.SubpassExternal,
                 dstSubpass = 0,
                 srcStageMask = PipelineStageFlags.PipelineStageColorAttachmentOutputBit,
                 srcAccessMask = 0,
@@ -564,7 +549,7 @@ namespace Volk.Example {
                 createInfo.preTransform = swapChainSupport.Capabilities.currentTransform;
                 createInfo.compositeAlpha = CompositeAlphaFlagsKHR.CompositeAlphaOpaqueBitKhr;
                 createInfo.presentMode = presentMode;
-                createInfo.clipped = Vulkan.Constants.True;
+                createInfo.clipped = Constants.True;
                 createInfo.oldSwapchain = IntPtr.Zero;
 
                 var swapChain = new IntPtr();
@@ -613,17 +598,17 @@ namespace Volk.Example {
         private static Extent2D ChooseSwapExtent(SurfaceCapabilitiesKHR capabilities) {
             if (capabilities.currentExtent.width != uint.MaxValue) {
                 return capabilities.currentExtent;
-            } else {
-                var actualExtent = new Extent2D {
-                    width = WindowWidth,
-                    height = WindowHeight
-                };
-
-                actualExtent.width = Math.Max(capabilities.minImageExtent.width, Math.Min(capabilities.maxImageExtent.width, actualExtent.width));
-                actualExtent.height = Math.Max(capabilities.minImageExtent.height, Math.Min(capabilities.maxImageExtent.height, actualExtent.height));
-
-                return actualExtent;
             }
+
+            var actualExtent = new Extent2D {
+                width = WindowWidth,
+                height = WindowHeight
+            };
+
+            actualExtent.width = Math.Max(capabilities.minImageExtent.width, Math.Min(capabilities.maxImageExtent.width, actualExtent.width));
+            actualExtent.height = Math.Max(capabilities.minImageExtent.height, Math.Min(capabilities.maxImageExtent.height, actualExtent.height));
+
+            return actualExtent;
         }
 
         private static unsafe SwapChainSupportDetails QuerySwapChainSupport(IntPtr device) {
@@ -661,7 +646,7 @@ namespace Volk.Example {
             var queueCreateInfos = new DeviceQueueCreateInfo[uniqueQueueFamilies.Length];
 
             var queuePriority = 1.0f;
-            for (int i = 0; i < uniqueQueueFamilies.Length; i++) {
+            for (var i = 0; i < uniqueQueueFamilies.Length; i++) {
                 queueCreateInfos[i] = new DeviceQueueCreateInfo {
                     sType = StructureType.StructureTypeDeviceQueueCreateInfo,
                     queueFamilyIndex = uniqueQueueFamilies[i],
@@ -725,7 +710,7 @@ namespace Volk.Example {
                 uint presentSupport = 0;
                 CommandTable.GetPhysicalDeviceSurfaceSupportKHR(device, i, _surface, &presentSupport);
 
-                if (presentSupport == Vulkan.Constants.True) {
+                if (presentSupport == Constants.True) {
                     indices.PresentFamily = i;
                 }
 
@@ -766,7 +751,7 @@ namespace Volk.Example {
         }
 
         private static unsafe string ToString(byte* str) {
-            var bytes = Enumerable.Range(0, Vulkan.Constants.MaxPhysicalDeviceNameSize).Select(index => str[index]).Where(c => c != 0).ToArray();
+            var bytes = Enumerable.Range(0, Constants.MaxPhysicalDeviceNameSize).Select(index => str[index]).Where(c => c != 0).ToArray();
 
             return Encoding.ASCII.GetString(bytes);
         }
@@ -821,7 +806,7 @@ namespace Volk.Example {
 
         private static unsafe void DrawFrame() {
             fixed (IntPtr* fencePtr = &_inFlightFences[_currentFrame]) {
-                CommandTable.WaitForFences(_device, 1, fencePtr, Vulkan.Constants.True, ulong.MaxValue);
+                CommandTable.WaitForFences(_device, 1, fencePtr, Constants.True, ulong.MaxValue);
             }
 
             uint imageIndex;
@@ -829,7 +814,7 @@ namespace Volk.Example {
 
             if (_imagesInFlight[imageIndex] != IntPtr.Zero) {
                 fixed (IntPtr* fencePtr = &_imagesInFlight[imageIndex]) {
-                    CommandTable.WaitForFences(_device, 1, fencePtr, Vulkan.Constants.True, ulong.MaxValue);
+                    CommandTable.WaitForFences(_device, 1, fencePtr, Constants.True, ulong.MaxValue);
                 }
             }
 
@@ -905,9 +890,9 @@ namespace Volk.Example {
             Glfw.Init();
 
             Glfw.WindowHint(Hint.ClientApi, ClientApi.None);
-            Glfw.WindowHint(Hint.Resizable, Constants.False);
+            Glfw.WindowHint(Hint.Resizable, GLFW.Constants.False);
 
-            _window = Glfw.CreateWindow(WindowWidth, WindowHeight, "Volk Example", Monitor.None, GLFW.Window.None);
+            _window = Glfw.CreateWindow(WindowWidth, WindowHeight, "Volk Example", Monitor.None, Window.None);
             Console.WriteLine($"Init a {WindowWidth}x{WindowHeight} window");
         }
 
@@ -915,6 +900,21 @@ namespace Volk.Example {
             if (actual != expected) {
                 throw new Exception($"Expected {expected} and got {actual} for: {message}");
             }
+        }
+
+        private struct QueueFamilyIndices {
+            public uint? GraphicsFamily;
+            public uint? PresentFamily;
+
+            public bool IsComplete() {
+                return GraphicsFamily != null && PresentFamily != null;
+            }
+        }
+
+        private struct SwapChainSupportDetails {
+            public SurfaceCapabilitiesKHR Capabilities;
+            public SurfaceFormatKHR[] Formats;
+            public PresentModeKHR[] PresentModes;
         }
     }
 }

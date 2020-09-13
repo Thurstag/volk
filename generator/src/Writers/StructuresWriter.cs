@@ -13,11 +13,11 @@ using static Volk.Generator.Utilities.VulkanUtilities;
 
 namespace Volk.Generator.Writers {
     /// <summary>
-    /// Writer for vulkan structures
+    ///     Writer for vulkan structures
     /// </summary>
     public static class StructuresWriter {
         /// <summary>
-        /// Write Structures file
+        ///     Write Structures file
         /// </summary>
         /// <param name="structures">Structures</param>
         /// <param name="types">Types</param>
@@ -136,7 +136,7 @@ namespace Volk.Vulkan.Types {{
         }
 
         /// <summary>
-        /// Get size of a given type in bits
+        ///     Get size of a given type in bits
         /// </summary>
         /// <param name="type">Type</param>
         /// <returns>Size in bits</returns>

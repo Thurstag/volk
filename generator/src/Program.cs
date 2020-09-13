@@ -13,7 +13,7 @@ using static Volk.Generator.Utilities.VulkanUtilities;
 
 namespace Volk.Generator {
     /// <summary>
-    /// Entry point
+    ///     Entry point
     /// </summary>
     internal static class Program {
         private const string VulkanSpecUrl = "https://raw.githubusercontent.com/KhronosGroup/Vulkan-Docs/master/xml/vk.xml";
@@ -122,7 +122,7 @@ namespace Volk.Generator {
         }
 
         /// <summary>
-        /// Write CommandTable file
+        ///     Write CommandTable file
         /// </summary>
         /// <param name="commands">Vulkan commands</param>
         private static void WriteCommandTable(Dictionary<string, XElement> commands) {
@@ -146,7 +146,7 @@ namespace Volk.Vulkan {{
         }
 
         /// <summary>
-        /// Extract enumeration values into <paramref name="enumerations"/> and <paramref name="bitmasks"/>
+        ///     Extract enumeration values into <paramref name="enumerations" /> and <paramref name="bitmasks" />
         /// </summary>
         /// <param name="root">XML root</param>
         /// <param name="enumerations">Enumerations</param>
@@ -216,7 +216,7 @@ namespace Volk.Vulkan {{
         }
 
         /// <summary>
-        /// Extract vulkan objects
+        ///     Extract vulkan objects
         /// </summary>
         /// <param name="types">Types</param>
         /// <param name="typeAliases">Type alias</param>

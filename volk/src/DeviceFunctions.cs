@@ -12,7 +12,7 @@ using Volk.Vulkan;
 namespace Volk {
     public static partial class Functions {
         /// <summary>
-        /// Load device commands into <see cref="CommandTable"/>
+        ///     Load device commands into <see cref="CommandTable" />
         /// </summary>
         /// <param name="device">Vulkan logical device</param>
         /// <exception cref="Exception">GetDeviceProcAddr isn't loaded</exception>
@@ -1501,7 +1501,7 @@ namespace Volk {
         }
 
         /// <summary>
-        /// Load device commands into a local table
+        ///     Load device commands into a local table
         /// </summary>
         /// <param name="device">Vulkan logical device</param>
         /// <returns>Device commands table</returns>

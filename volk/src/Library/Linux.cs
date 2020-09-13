@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace Volk.Library {
     /// <summary>
-    /// Set of functions to manipulate linux libraries
+    ///     Set of functions to manipulate linux libraries
     /// </summary>
     public static class Linux {
         private const string DllName = "libdl.so";

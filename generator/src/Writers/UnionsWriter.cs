@@ -13,11 +13,11 @@ using static Volk.Generator.Utilities.VulkanUtilities;
 
 namespace Volk.Generator.Writers {
     /// <summary>
-    /// Writer for vulkan unions
+    ///     Writer for vulkan unions
     /// </summary>
     public static class UnionsWriter {
         /// <summary>
-        /// Write Unions file
+        ///     Write Unions file
         /// </summary>
         /// <param name="unions">Vulkan unions</param>
         /// <param name="baseTypes">Base types</param>
@@ -52,7 +52,7 @@ namespace Volk.Vulkan.Types {{
         }
 
         /// <summary>
-        /// Check if a given type is unsafe
+        ///     Check if a given type is unsafe
         /// </summary>
         /// <param name="type">Type</param>
         /// <param name="fixed">Type is fixed</param>

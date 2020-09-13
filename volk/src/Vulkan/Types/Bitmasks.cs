@@ -14,64 +14,64 @@ using DeviceAddress = System.UInt64;
 
 namespace Volk.Vulkan.Types {
     [FlagsAttribute]
-    public enum FramebufferCreateFlags : Flags {
+    public enum FramebufferCreateFlags : uint {
         FramebufferCreateImagelessBit = 1 << 0,
         FramebufferCreateImagelessBitKhr = FramebufferCreateImagelessBit
     }
 
     [FlagsAttribute]
-    public enum QueryPoolCreateFlags : Flags { }
+    public enum QueryPoolCreateFlags : uint { }
 
     [FlagsAttribute]
-    public enum RenderPassCreateFlags : Flags {
+    public enum RenderPassCreateFlags : uint {
         RenderPassCreateReserved0BitKhr = 1 << 0,
         RenderPassCreateTransformBitQcom = 1 << 1
     }
 
     [FlagsAttribute]
-    public enum SamplerCreateFlags : Flags {
+    public enum SamplerCreateFlags : uint {
         SamplerCreateSubsampledBitExt = 1 << 0,
         SamplerCreateSubsampledCoarseReconstructionBitExt = 1 << 1
     }
 
     [FlagsAttribute]
-    public enum PipelineLayoutCreateFlags : Flags { }
+    public enum PipelineLayoutCreateFlags : uint { }
 
     [FlagsAttribute]
-    public enum PipelineCacheCreateFlags : Flags {
+    public enum PipelineCacheCreateFlags : uint {
         PipelineCacheCreateReserved1BitExt = 1 << 1,
         PipelineCacheCreateExternallySynchronizedBitExt = 1 << 0
     }
 
     [FlagsAttribute]
-    public enum PipelineDepthStencilStateCreateFlags : Flags { }
+    public enum PipelineDepthStencilStateCreateFlags : uint { }
 
     [FlagsAttribute]
-    public enum PipelineDynamicStateCreateFlags : Flags { }
+    public enum PipelineDynamicStateCreateFlags : uint { }
 
     [FlagsAttribute]
-    public enum PipelineColorBlendStateCreateFlags : Flags { }
+    public enum PipelineColorBlendStateCreateFlags : uint { }
 
     [FlagsAttribute]
-    public enum PipelineMultisampleStateCreateFlags : Flags { }
+    public enum PipelineMultisampleStateCreateFlags : uint { }
 
     [FlagsAttribute]
-    public enum PipelineRasterizationStateCreateFlags : Flags { }
+    public enum PipelineRasterizationStateCreateFlags : uint { }
 
     [FlagsAttribute]
-    public enum PipelineViewportStateCreateFlags : Flags { }
+    public enum PipelineViewportStateCreateFlags : uint { }
 
     [FlagsAttribute]
-    public enum PipelineTessellationStateCreateFlags : Flags { }
+    public enum PipelineTessellationStateCreateFlags : uint { }
 
     [FlagsAttribute]
-    public enum PipelineInputAssemblyStateCreateFlags : Flags { }
+    public enum PipelineInputAssemblyStateCreateFlags : uint { }
 
     [FlagsAttribute]
-    public enum PipelineVertexInputStateCreateFlags : Flags { }
+    public enum PipelineVertexInputStateCreateFlags : uint { }
 
     [FlagsAttribute]
-    public enum PipelineShaderStageCreateFlags : Flags {
+    public enum PipelineShaderStageCreateFlags : uint {
         PipelineShaderStageCreateReserved2BitNv = 1 << 2,
         PipelineShaderStageCreateAllowVaryingSubgroupSizeBitExt = 1 << 0,
         PipelineShaderStageCreateRequireFullSubgroupsBitExt = 1 << 1,
@@ -79,28 +79,28 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum DescriptorSetLayoutCreateFlags : Flags {
+    public enum DescriptorSetLayoutCreateFlags : uint {
         DescriptorSetLayoutCreateUpdateAfterBindPoolBit = 1 << 1,
         DescriptorSetLayoutCreatePushDescriptorBitKhr = 1 << 0,
         DescriptorSetLayoutCreateUpdateAfterBindPoolBitExt = DescriptorSetLayoutCreateUpdateAfterBindPoolBit
     }
 
     [FlagsAttribute]
-    public enum BufferViewCreateFlags : Flags { }
+    public enum BufferViewCreateFlags : uint { }
 
     [FlagsAttribute]
-    public enum InstanceCreateFlags : Flags { }
+    public enum InstanceCreateFlags : uint { }
 
     [FlagsAttribute]
-    public enum DeviceCreateFlags : Flags { }
+    public enum DeviceCreateFlags : uint { }
 
     [FlagsAttribute]
-    public enum DeviceQueueCreateFlags : Flags {
+    public enum DeviceQueueCreateFlags : uint {
         DeviceQueueCreateProtectedBit = 1 << 0
     }
 
     [FlagsAttribute]
-    public enum QueueFlags : Flags {
+    public enum QueueFlags : uint {
         QueueGraphicsBit = 1 << 0,
         QueueComputeBit = 1 << 1,
         QueueTransferBit = 1 << 2,
@@ -111,7 +111,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum MemoryPropertyFlags : Flags {
+    public enum MemoryPropertyFlags : uint {
         MemoryPropertyDeviceLocalBit = 1 << 0,
         MemoryPropertyHostVisibleBit = 1 << 1,
         MemoryPropertyHostCoherentBit = 1 << 2,
@@ -123,7 +123,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum MemoryHeapFlags : Flags {
+    public enum MemoryHeapFlags : uint {
         MemoryHeapDeviceLocalBit = 1 << 0,
         MemoryHeapMultiInstanceBit = 1 << 1,
         MemoryHeapMultiInstanceBitKhr = MemoryHeapMultiInstanceBit,
@@ -131,7 +131,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum AccessFlags : Flags {
+    public enum AccessFlags : uint {
         AccessIndirectCommandReadBit = 1 << 0,
         AccessIndexReadBit = 1 << 1,
         AccessVertexAttributeReadBit = 1 << 2,
@@ -168,7 +168,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum BufferUsageFlags : Flags {
+    public enum BufferUsageFlags : uint {
         BufferUsageTransferSrcBit = 1 << 0,
         BufferUsageTransferDstBit = 1 << 1,
         BufferUsageUniformTexelBufferBit = 1 << 2,
@@ -196,7 +196,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum BufferCreateFlags : Flags {
+    public enum BufferCreateFlags : uint {
         BufferCreateSparseBindingBit = 1 << 0,
         BufferCreateSparseResidencyBit = 1 << 1,
         BufferCreateSparseAliasedBit = 1 << 2,
@@ -207,7 +207,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum ShaderStageFlags : Flags {
+    public enum ShaderStageFlags : uint {
         ShaderStageVertexBit = 1 << 0,
         ShaderStageTessellationControlBit = 1 << 1,
         ShaderStageTessellationEvaluationBit = 1 << 2,
@@ -233,7 +233,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum ImageUsageFlags : Flags {
+    public enum ImageUsageFlags : uint {
         ImageUsageTransferSrcBit = 1 << 0,
         ImageUsageTransferDstBit = 1 << 1,
         ImageUsageSampledBit = 1 << 2,
@@ -255,7 +255,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum ImageCreateFlags : Flags {
+    public enum ImageCreateFlags : uint {
         ImageCreateSparseBindingBit = 1 << 0,
         ImageCreateSparseResidencyBit = 1 << 1,
         ImageCreateSparseAliasedBit = 1 << 2,
@@ -280,13 +280,13 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum ImageViewCreateFlags : Flags {
+    public enum ImageViewCreateFlags : uint {
         ImageViewCreateFragmentDensityMapDynamicBitExt = 1 << 0,
         ImageViewCreateFragmentDensityMapDeferredBitExt = 1 << 1
     }
 
     [FlagsAttribute]
-    public enum PipelineCreateFlags : Flags {
+    public enum PipelineCreateFlags : uint {
         PipelineCreateDisableOptimizationBit = 1 << 0,
         PipelineCreateAllowDerivativesBit = 1 << 1,
         PipelineCreateDerivativeBit = 1 << 2,
@@ -312,7 +312,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum ColorComponentFlags : Flags {
+    public enum ColorComponentFlags : uint {
         ColorComponentRBit = 1 << 0,
         ColorComponentGBit = 1 << 1,
         ColorComponentBBit = 1 << 2,
@@ -320,15 +320,15 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum FenceCreateFlags : Flags {
+    public enum FenceCreateFlags : uint {
         FenceCreateSignaledBit = 1 << 0
     }
 
     [FlagsAttribute]
-    public enum SemaphoreCreateFlags : Flags { }
+    public enum SemaphoreCreateFlags : uint { }
 
     [FlagsAttribute]
-    public enum FormatFeatureFlags : Flags {
+    public enum FormatFeatureFlags : uint {
         FormatFeatureSampledImageBit = 1 << 0,
         FormatFeatureStorageImageBit = 1 << 1,
         FormatFeatureStorageImageAtomicBit = 1 << 2,
@@ -380,12 +380,12 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum QueryControlFlags : Flags {
+    public enum QueryControlFlags : uint {
         QueryControlPreciseBit = 1 << 0
     }
 
     [FlagsAttribute]
-    public enum QueryResultFlags : Flags {
+    public enum QueryResultFlags : uint {
         QueryResult64Bit = 1 << 0,
         QueryResultWaitBit = 1 << 1,
         QueryResultWithAvailabilityBit = 1 << 2,
@@ -393,39 +393,39 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum ShaderModuleCreateFlags : Flags {
+    public enum ShaderModuleCreateFlags : uint {
         ShaderModuleCreateReserved0BitNv = 1 << 0
     }
 
     [FlagsAttribute]
-    public enum EventCreateFlags : Flags { }
+    public enum EventCreateFlags : uint { }
 
     [FlagsAttribute]
-    public enum CommandPoolCreateFlags : Flags {
+    public enum CommandPoolCreateFlags : uint {
         CommandPoolCreateTransientBit = 1 << 0,
         CommandPoolCreateResetCommandBufferBit = 1 << 1,
         CommandPoolCreateProtectedBit = 1 << 2
     }
 
     [FlagsAttribute]
-    public enum CommandPoolResetFlags : Flags {
+    public enum CommandPoolResetFlags : uint {
         CommandPoolResetReleaseResourcesBit = 1 << 0
     }
 
     [FlagsAttribute]
-    public enum CommandBufferResetFlags : Flags {
+    public enum CommandBufferResetFlags : uint {
         CommandBufferResetReleaseResourcesBit = 1 << 0
     }
 
     [FlagsAttribute]
-    public enum CommandBufferUsageFlags : Flags {
+    public enum CommandBufferUsageFlags : uint {
         CommandBufferUsageOneTimeSubmitBit = 1 << 0,
         CommandBufferUsageRenderPassContinueBit = 1 << 1,
         CommandBufferUsageSimultaneousUseBit = 1 << 2
     }
 
     [FlagsAttribute]
-    public enum QueryPipelineStatisticFlags : Flags {
+    public enum QueryPipelineStatisticFlags : uint {
         QueryPipelineStatisticInputAssemblyVerticesBit = 1 << 0,
         QueryPipelineStatisticInputAssemblyPrimitivesBit = 1 << 1,
         QueryPipelineStatisticVertexShaderInvocationsBit = 1 << 2,
@@ -440,10 +440,10 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum MemoryMapFlags : Flags { }
+    public enum MemoryMapFlags : uint { }
 
     [FlagsAttribute]
-    public enum ImageAspectFlags : Flags {
+    public enum ImageAspectFlags : uint {
         ImageAspectColorBit = 1 << 0,
         ImageAspectDepthBit = 1 << 1,
         ImageAspectStencilBit = 1 << 2,
@@ -461,19 +461,19 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum SparseMemoryBindFlags : Flags {
+    public enum SparseMemoryBindFlags : uint {
         SparseMemoryBindMetadataBit = 1 << 0
     }
 
     [FlagsAttribute]
-    public enum SparseImageFormatFlags : Flags {
+    public enum SparseImageFormatFlags : uint {
         SparseImageFormatSingleMiptailBit = 1 << 0,
         SparseImageFormatAlignedMipSizeBit = 1 << 1,
         SparseImageFormatNonstandardBlockSizeBit = 1 << 2
     }
 
     [FlagsAttribute]
-    public enum SubpassDescriptionFlags : Flags {
+    public enum SubpassDescriptionFlags : uint {
         SubpassDescriptionPerViewAttributesBitNvx = 1 << 0,
         SubpassDescriptionPerViewPositionXOnlyBitNvx = 1 << 1,
         SubpassDescriptionFragmentRegionBitQcom = 1 << 2,
@@ -481,7 +481,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum PipelineStageFlags : Flags {
+    public enum PipelineStageFlags : uint {
         PipelineStageTopOfPipeBit = 1 << 0,
         PipelineStageDrawIndirectBit = 1 << 1,
         PipelineStageVertexInputBit = 1 << 2,
@@ -515,7 +515,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum SampleCountFlags : Flags {
+    public enum SampleCountFlags : uint {
         SampleCount1Bit = 1 << 0,
         SampleCount2Bit = 1 << 1,
         SampleCount4Bit = 1 << 2,
@@ -526,12 +526,12 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum AttachmentDescriptionFlags : Flags {
+    public enum AttachmentDescriptionFlags : uint {
         AttachmentDescriptionMayAliasBit = 1 << 0
     }
 
     [FlagsAttribute]
-    public enum StencilFaceFlags : Flags {
+    public enum StencilFaceFlags : uint {
         StencilFaceFrontBit = 1 << 0,
         StencilFaceBackBit = 1 << 1,
         StencilFaceFrontAndBack = 0x00000003,
@@ -539,7 +539,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum CullModeFlags : Flags {
+    public enum CullModeFlags : uint {
         CullModeNone = 0,
         CullModeFrontBit = 1 << 0,
         CullModeBackBit = 1 << 1,
@@ -547,17 +547,17 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum DescriptorPoolCreateFlags : Flags {
+    public enum DescriptorPoolCreateFlags : uint {
         DescriptorPoolCreateFreeDescriptorSetBit = 1 << 0,
         DescriptorPoolCreateUpdateAfterBindBit = 1 << 1,
         DescriptorPoolCreateUpdateAfterBindBitExt = DescriptorPoolCreateUpdateAfterBindBit
     }
 
     [FlagsAttribute]
-    public enum DescriptorPoolResetFlags : Flags { }
+    public enum DescriptorPoolResetFlags : uint { }
 
     [FlagsAttribute]
-    public enum DependencyFlags : Flags {
+    public enum DependencyFlags : uint {
         DependencyByRegionBit = 1 << 0,
         DependencyDeviceGroupBit = 1 << 2,
         DependencyViewLocalBit = 1 << 1,
@@ -566,7 +566,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum SubgroupFeatureFlags : Flags {
+    public enum SubgroupFeatureFlags : uint {
         SubgroupFeatureBasicBit = 1 << 0,
         SubgroupFeatureVoteBit = 1 << 1,
         SubgroupFeatureArithmeticBit = 1 << 2,
@@ -579,19 +579,19 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum IndirectCommandsLayoutUsageFlagsNV : Flags {
+    public enum IndirectCommandsLayoutUsageFlagsNV : uint {
         IndirectCommandsLayoutUsageExplicitPreprocessBitNv = 1 << 0,
         IndirectCommandsLayoutUsageIndexedSequencesBitNv = 1 << 1,
         IndirectCommandsLayoutUsageUnorderedSequencesBitNv = 1 << 2
     }
 
     [FlagsAttribute]
-    public enum IndirectStateFlagsNV : Flags {
+    public enum IndirectStateFlagsNV : uint {
         IndirectStateFlagFrontfaceBitNv = 1 << 0
     }
 
     [FlagsAttribute]
-    public enum GeometryFlagsKHR : Flags {
+    public enum GeometryFlagsKHR : uint {
         GeometryOpaqueBitKhr = 1 << 0,
         GeometryNoDuplicateAnyHitInvocationBitKhr = 1 << 1,
         GeometryOpaqueBitNv = GeometryOpaqueBitKhr,
@@ -599,7 +599,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum GeometryInstanceFlagsKHR : Flags {
+    public enum GeometryInstanceFlagsKHR : uint {
         GeometryInstanceTriangleFacingCullDisableBitKhr = 1 << 0,
         GeometryInstanceTriangleFrontCounterclockwiseBitKhr = 1 << 1,
         GeometryInstanceForceOpaqueBitKhr = 1 << 2,
@@ -611,7 +611,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum BuildAccelerationStructureFlagsKHR : Flags {
+    public enum BuildAccelerationStructureFlagsKHR : uint {
         BuildAccelerationStructureAllowUpdateBitKhr = 1 << 0,
         BuildAccelerationStructureAllowCompactionBitKhr = 1 << 1,
         BuildAccelerationStructurePreferFastTraceBitKhr = 1 << 2,
@@ -625,48 +625,48 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum PrivateDataSlotCreateFlagsEXT : Flags { }
+    public enum PrivateDataSlotCreateFlagsEXT : uint { }
 
     [FlagsAttribute]
-    public enum DescriptorUpdateTemplateCreateFlags : Flags { }
+    public enum DescriptorUpdateTemplateCreateFlags : uint { }
 
     [FlagsAttribute]
-    public enum PipelineCreationFeedbackFlagsEXT : Flags {
+    public enum PipelineCreationFeedbackFlagsEXT : uint {
         PipelineCreationFeedbackValidBitExt = 1 << 0,
         PipelineCreationFeedbackApplicationPipelineCacheHitBitExt = 1 << 1,
         PipelineCreationFeedbackBasePipelineAccelerationBitExt = 1 << 2
     }
 
     [FlagsAttribute]
-    public enum PerformanceCounterDescriptionFlagsKHR : Flags {
+    public enum PerformanceCounterDescriptionFlagsKHR : uint {
         PerformanceCounterDescriptionPerformanceImpactingKhr = 1 << 0,
         PerformanceCounterDescriptionConcurrentlyImpactedKhr = 1 << 1
     }
 
     [FlagsAttribute]
-    public enum AcquireProfilingLockFlagsKHR : Flags { }
+    public enum AcquireProfilingLockFlagsKHR : uint { }
 
     [FlagsAttribute]
-    public enum SemaphoreWaitFlags : Flags {
+    public enum SemaphoreWaitFlags : uint {
         SemaphoreWaitAnyBit = 1 << 0,
         SemaphoreWaitAnyBitKhr = SemaphoreWaitAnyBit
     }
 
     [FlagsAttribute]
-    public enum PipelineCompilerControlFlagsAMD : Flags { }
+    public enum PipelineCompilerControlFlagsAMD : uint { }
 
     [FlagsAttribute]
-    public enum ShaderCorePropertiesFlagsAMD : Flags { }
+    public enum ShaderCorePropertiesFlagsAMD : uint { }
 
     [FlagsAttribute]
-    public enum DeviceDiagnosticsConfigFlagsNV : Flags {
+    public enum DeviceDiagnosticsConfigFlagsNV : uint {
         DeviceDiagnosticsConfigEnableShaderDebugInfoBitNv = 1 << 0,
         DeviceDiagnosticsConfigEnableResourceTrackingBitNv = 1 << 1,
         DeviceDiagnosticsConfigEnableAutomaticCheckpointsBitNv = 1 << 2
     }
 
     [FlagsAttribute]
-    public enum CompositeAlphaFlagsKHR : Flags {
+    public enum CompositeAlphaFlagsKHR : uint {
         CompositeAlphaOpaqueBitKhr = 1 << 0,
         CompositeAlphaPreMultipliedBitKhr = 1 << 1,
         CompositeAlphaPostMultipliedBitKhr = 1 << 2,
@@ -674,7 +674,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum DisplayPlaneAlphaFlagsKHR : Flags {
+    public enum DisplayPlaneAlphaFlagsKHR : uint {
         DisplayPlaneAlphaOpaqueBitKhr = 1 << 0,
         DisplayPlaneAlphaGlobalBitKhr = 1 << 1,
         DisplayPlaneAlphaPerPixelBitKhr = 1 << 2,
@@ -682,7 +682,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum SurfaceTransformFlagsKHR : Flags {
+    public enum SurfaceTransformFlagsKHR : uint {
         SurfaceTransformIdentityBitKhr = 1 << 0,
         SurfaceTransformRotate90BitKhr = 1 << 1,
         SurfaceTransformRotate180BitKhr = 1 << 2,
@@ -695,59 +695,59 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum SwapchainCreateFlagsKHR : Flags {
+    public enum SwapchainCreateFlagsKHR : uint {
         SwapchainCreateSplitInstanceBindRegionsBitKhr = 1 << 0,
         SwapchainCreateProtectedBitKhr = 1 << 1,
         SwapchainCreateMutableFormatBitKhr = 1 << 2
     }
 
     [FlagsAttribute]
-    public enum DisplayModeCreateFlagsKHR : Flags { }
+    public enum DisplayModeCreateFlagsKHR : uint { }
 
     [FlagsAttribute]
-    public enum DisplaySurfaceCreateFlagsKHR : Flags { }
+    public enum DisplaySurfaceCreateFlagsKHR : uint { }
 
     [FlagsAttribute]
-    public enum AndroidSurfaceCreateFlagsKHR : Flags { }
+    public enum AndroidSurfaceCreateFlagsKHR : uint { }
 
     [FlagsAttribute]
-    public enum ViSurfaceCreateFlagsNN : Flags { }
+    public enum ViSurfaceCreateFlagsNN : uint { }
 
     [FlagsAttribute]
-    public enum WaylandSurfaceCreateFlagsKHR : Flags { }
+    public enum WaylandSurfaceCreateFlagsKHR : uint { }
 
     [FlagsAttribute]
-    public enum Win32SurfaceCreateFlagsKHR : Flags { }
+    public enum Win32SurfaceCreateFlagsKHR : uint { }
 
     [FlagsAttribute]
-    public enum XlibSurfaceCreateFlagsKHR : Flags { }
+    public enum XlibSurfaceCreateFlagsKHR : uint { }
 
     [FlagsAttribute]
-    public enum XcbSurfaceCreateFlagsKHR : Flags { }
+    public enum XcbSurfaceCreateFlagsKHR : uint { }
 
     [FlagsAttribute]
-    public enum DirectFBSurfaceCreateFlagsEXT : Flags { }
+    public enum DirectFBSurfaceCreateFlagsEXT : uint { }
 
     [FlagsAttribute]
-    public enum IOSSurfaceCreateFlagsMVK : Flags { }
+    public enum IOSSurfaceCreateFlagsMVK : uint { }
 
     [FlagsAttribute]
-    public enum MacOSSurfaceCreateFlagsMVK : Flags { }
+    public enum MacOSSurfaceCreateFlagsMVK : uint { }
 
     [FlagsAttribute]
-    public enum MetalSurfaceCreateFlagsEXT : Flags { }
+    public enum MetalSurfaceCreateFlagsEXT : uint { }
 
     [FlagsAttribute]
-    public enum ImagePipeSurfaceCreateFlagsFUCHSIA : Flags { }
+    public enum ImagePipeSurfaceCreateFlagsFUCHSIA : uint { }
 
     [FlagsAttribute]
-    public enum StreamDescriptorSurfaceCreateFlagsGGP : Flags { }
+    public enum StreamDescriptorSurfaceCreateFlagsGGP : uint { }
 
     [FlagsAttribute]
-    public enum HeadlessSurfaceCreateFlagsEXT : Flags { }
+    public enum HeadlessSurfaceCreateFlagsEXT : uint { }
 
     [FlagsAttribute]
-    public enum PeerMemoryFeatureFlags : Flags {
+    public enum PeerMemoryFeatureFlags : uint {
         PeerMemoryFeatureCopySrcBit = 1 << 0,
         PeerMemoryFeatureCopyDstBit = 1 << 1,
         PeerMemoryFeatureGenericSrcBit = 1 << 2,
@@ -759,7 +759,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum MemoryAllocateFlags : Flags {
+    public enum MemoryAllocateFlags : uint {
         MemoryAllocateDeviceMaskBit = 1 << 0,
         MemoryAllocateDeviceAddressBit = 1 << 1,
         MemoryAllocateDeviceAddressCaptureReplayBit = 1 << 2,
@@ -769,7 +769,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum DeviceGroupPresentModeFlagsKHR : Flags {
+    public enum DeviceGroupPresentModeFlagsKHR : uint {
         DeviceGroupPresentModeLocalBitKhr = 1 << 0,
         DeviceGroupPresentModeRemoteBitKhr = 1 << 1,
         DeviceGroupPresentModeSumBitKhr = 1 << 2,
@@ -777,7 +777,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum DebugReportFlagsEXT : Flags {
+    public enum DebugReportFlagsEXT : uint {
         DebugReportInformationBitExt = 1 << 0,
         DebugReportWarningBitExt = 1 << 1,
         DebugReportPerformanceWarningBitExt = 1 << 2,
@@ -786,10 +786,10 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum CommandPoolTrimFlags : Flags { }
+    public enum CommandPoolTrimFlags : uint { }
 
     [FlagsAttribute]
-    public enum ExternalMemoryHandleTypeFlagsNV : Flags {
+    public enum ExternalMemoryHandleTypeFlagsNV : uint {
         ExternalMemoryHandleTypeOpaqueWin32BitNv = 1 << 0,
         ExternalMemoryHandleTypeOpaqueWin32KmtBitNv = 1 << 1,
         ExternalMemoryHandleTypeD3d11ImageBitNv = 1 << 2,
@@ -797,14 +797,14 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum ExternalMemoryFeatureFlagsNV : Flags {
+    public enum ExternalMemoryFeatureFlagsNV : uint {
         ExternalMemoryFeatureDedicatedOnlyBitNv = 1 << 0,
         ExternalMemoryFeatureExportableBitNv = 1 << 1,
         ExternalMemoryFeatureImportableBitNv = 1 << 2
     }
 
     [FlagsAttribute]
-    public enum ExternalMemoryHandleTypeFlags : Flags {
+    public enum ExternalMemoryHandleTypeFlags : uint {
         ExternalMemoryHandleTypeOpaqueFdBit = 1 << 0,
         ExternalMemoryHandleTypeOpaqueWin32Bit = 1 << 1,
         ExternalMemoryHandleTypeOpaqueWin32KmtBit = 1 << 2,
@@ -826,7 +826,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum ExternalMemoryFeatureFlags : Flags {
+    public enum ExternalMemoryFeatureFlags : uint {
         ExternalMemoryFeatureDedicatedOnlyBit = 1 << 0,
         ExternalMemoryFeatureExportableBit = 1 << 1,
         ExternalMemoryFeatureImportableBit = 1 << 2,
@@ -836,7 +836,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum ExternalSemaphoreHandleTypeFlags : Flags {
+    public enum ExternalSemaphoreHandleTypeFlags : uint {
         ExternalSemaphoreHandleTypeOpaqueFdBit = 1 << 0,
         ExternalSemaphoreHandleTypeOpaqueWin32Bit = 1 << 1,
         ExternalSemaphoreHandleTypeOpaqueWin32KmtBit = 1 << 2,
@@ -851,7 +851,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum ExternalSemaphoreFeatureFlags : Flags {
+    public enum ExternalSemaphoreFeatureFlags : uint {
         ExternalSemaphoreFeatureExportableBit = 1 << 0,
         ExternalSemaphoreFeatureImportableBit = 1 << 1,
         ExternalSemaphoreFeatureExportableBitKhr = ExternalSemaphoreFeatureExportableBit,
@@ -859,13 +859,13 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum SemaphoreImportFlags : Flags {
+    public enum SemaphoreImportFlags : uint {
         SemaphoreImportTemporaryBit = 1 << 0,
         SemaphoreImportTemporaryBitKhr = SemaphoreImportTemporaryBit
     }
 
     [FlagsAttribute]
-    public enum ExternalFenceHandleTypeFlags : Flags {
+    public enum ExternalFenceHandleTypeFlags : uint {
         ExternalFenceHandleTypeOpaqueFdBit = 1 << 0,
         ExternalFenceHandleTypeOpaqueWin32Bit = 1 << 1,
         ExternalFenceHandleTypeOpaqueWin32KmtBit = 1 << 2,
@@ -877,7 +877,7 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum ExternalFenceFeatureFlags : Flags {
+    public enum ExternalFenceFeatureFlags : uint {
         ExternalFenceFeatureExportableBit = 1 << 0,
         ExternalFenceFeatureImportableBit = 1 << 1,
         ExternalFenceFeatureExportableBitKhr = ExternalFenceFeatureExportableBit,
@@ -885,36 +885,36 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum FenceImportFlags : Flags {
+    public enum FenceImportFlags : uint {
         FenceImportTemporaryBit = 1 << 0,
         FenceImportTemporaryBitKhr = FenceImportTemporaryBit
     }
 
     [FlagsAttribute]
-    public enum SurfaceCounterFlagsEXT : Flags {
+    public enum SurfaceCounterFlagsEXT : uint {
         SurfaceCounterVblankExt = 1 << 0
     }
 
     [FlagsAttribute]
-    public enum PipelineViewportSwizzleStateCreateFlagsNV : Flags { }
+    public enum PipelineViewportSwizzleStateCreateFlagsNV : uint { }
 
     [FlagsAttribute]
-    public enum PipelineDiscardRectangleStateCreateFlagsEXT : Flags { }
+    public enum PipelineDiscardRectangleStateCreateFlagsEXT : uint { }
 
     [FlagsAttribute]
-    public enum PipelineCoverageToColorStateCreateFlagsNV : Flags { }
+    public enum PipelineCoverageToColorStateCreateFlagsNV : uint { }
 
     [FlagsAttribute]
-    public enum PipelineCoverageModulationStateCreateFlagsNV : Flags { }
+    public enum PipelineCoverageModulationStateCreateFlagsNV : uint { }
 
     [FlagsAttribute]
-    public enum PipelineCoverageReductionStateCreateFlagsNV : Flags { }
+    public enum PipelineCoverageReductionStateCreateFlagsNV : uint { }
 
     [FlagsAttribute]
-    public enum ValidationCacheCreateFlagsEXT : Flags { }
+    public enum ValidationCacheCreateFlagsEXT : uint { }
 
     [FlagsAttribute]
-    public enum DebugUtilsMessageSeverityFlagsEXT : Flags {
+    public enum DebugUtilsMessageSeverityFlagsEXT : uint {
         DebugUtilsMessageSeverityVerboseBitExt = 1 << 0,
         DebugUtilsMessageSeverityInfoBitExt = 1 << 4,
         DebugUtilsMessageSeverityWarningBitExt = 1 << 8,
@@ -922,23 +922,23 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum DebugUtilsMessageTypeFlagsEXT : Flags {
+    public enum DebugUtilsMessageTypeFlagsEXT : uint {
         DebugUtilsMessageTypeGeneralBitExt = 1 << 0,
         DebugUtilsMessageTypeValidationBitExt = 1 << 1,
         DebugUtilsMessageTypePerformanceBitExt = 1 << 2
     }
 
     [FlagsAttribute]
-    public enum DebugUtilsMessengerCreateFlagsEXT : Flags { }
+    public enum DebugUtilsMessengerCreateFlagsEXT : uint { }
 
     [FlagsAttribute]
-    public enum DebugUtilsMessengerCallbackDataFlagsEXT : Flags { }
+    public enum DebugUtilsMessengerCallbackDataFlagsEXT : uint { }
 
     [FlagsAttribute]
-    public enum PipelineRasterizationConservativeStateCreateFlagsEXT : Flags { }
+    public enum PipelineRasterizationConservativeStateCreateFlagsEXT : uint { }
 
     [FlagsAttribute]
-    public enum DescriptorBindingFlags : Flags {
+    public enum DescriptorBindingFlags : uint {
         DescriptorBindingUpdateAfterBindBit = 1 << 0,
         DescriptorBindingUpdateUnusedWhilePendingBit = 1 << 1,
         DescriptorBindingPartiallyBoundBit = 1 << 2,
@@ -950,12 +950,12 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum ConditionalRenderingFlagsEXT : Flags {
+    public enum ConditionalRenderingFlagsEXT : uint {
         ConditionalRenderingInvertedBitExt = 1 << 0
     }
 
     [FlagsAttribute]
-    public enum ResolveModeFlags : Flags {
+    public enum ResolveModeFlags : uint {
         ResolveModeNone = 0,
         ResolveModeSampleZeroBit = 1 << 0,
         ResolveModeAverageBit = 1 << 1,
@@ -969,18 +969,18 @@ namespace Volk.Vulkan.Types {
     }
 
     [FlagsAttribute]
-    public enum PipelineRasterizationStateStreamCreateFlagsEXT : Flags { }
+    public enum PipelineRasterizationStateStreamCreateFlagsEXT : uint { }
 
     [FlagsAttribute]
-    public enum PipelineRasterizationDepthClipStateCreateFlagsEXT : Flags { }
+    public enum PipelineRasterizationDepthClipStateCreateFlagsEXT : uint { }
 
     [FlagsAttribute]
-    public enum SwapchainImageUsageFlagsANDROID : Flags {
+    public enum SwapchainImageUsageFlagsANDROID : uint {
         SwapchainImageUsageSharedBitAndroid = 1 << 0
     }
 
     [FlagsAttribute]
-    public enum ToolPurposeFlagsEXT : Flags {
+    public enum ToolPurposeFlagsEXT : uint {
         ToolPurposeValidationBitExt = 1 << 0,
         ToolPurposeProfilingBitExt = 1 << 1,
         ToolPurposeTracingBitExt = 1 << 2,

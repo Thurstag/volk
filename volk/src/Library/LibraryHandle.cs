@@ -6,14 +6,14 @@ using System;
 
 namespace Volk.Library {
     /// <summary>
-    /// Managed pointer to a library
+    ///     Managed pointer to a library
     /// </summary>
     public class LibraryHandle {
-        private readonly IntPtr _handle;
         private readonly Functions.LibraryDeleter _deleter;
+        private readonly IntPtr _handle;
 
         /// <summary>
-        /// Constructor
+        ///     Constructor
         /// </summary>
         /// <param name="handle">Pointer to a dynamically loaded library</param>
         /// <param name="deleter">Function to free library automatically</param>
@@ -23,7 +23,7 @@ namespace Volk.Library {
         }
 
         /// <summary>
-        /// Destructor
+        ///     Destructor
         /// </summary>
         ~LibraryHandle() {
             _deleter(_handle);

@@ -13,11 +13,11 @@ using static Volk.Generator.Utilities.VulkanUtilities;
 
 namespace Volk.Generator.Writers {
     /// <summary>
-    /// Writer for vulkan commands
+    ///     Writer for vulkan commands
     /// </summary>
     public static class CommandsWriter {
         /// <summary>
-        /// Write vulkan commands file
+        ///     Write vulkan commands file
         /// </summary>
         /// <param name="commands">Commands</param>
         /// <param name="baseTypes">Base types</param>

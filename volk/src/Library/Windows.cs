@@ -7,7 +7,7 @@ using System.Runtime.InteropServices;
 
 namespace Volk.Library {
     /// <summary>
-    /// Set of functions to manipulate windows libraries
+    ///     Set of functions to manipulate windows libraries
     /// </summary>
     public static class Windows {
         private const string DllName = "kernel32.dll";
